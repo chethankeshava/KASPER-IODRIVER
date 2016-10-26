@@ -1,5 +1,5 @@
 /*
- * gps.hpp
+ * gps.hpp GPS header file
  *
  *  Created on: Oct 17, 2016
  *      Author: ankit
