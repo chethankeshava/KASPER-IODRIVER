@@ -5,4 +5,4 @@
 #
 
 
-python ../_can_dbc/dbc_parse.py -i ../../lpc1758_freertos/_can_dbc/243.dbc -s DRIVER > ../_can_dbc/generated_can.h
+python ../_can_dbc/dbc_parse.py -i ../../lpc1758_freertos/_can_dbc/243.dbc -s GEO > ../_can_dbc/generated_can.h

@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-
+#include "gps.hpp"
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -72,6 +72,7 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
     LE.toggle(2);
+    //geoSendGpsData();
 }
 
 void period_100Hz(uint32_t count)

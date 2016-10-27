@@ -25,7 +25,7 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
-
+#include "gps.hpp"
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
  * for details.  There is a very simple example towards the beginning of this class's declaration.
@@ -52,10 +52,12 @@ int main(void)
      * such that it can save remote control codes to non-volatile memory.  IR remote
      * control codes can be learned by typing the "learn" terminal command.
      */
-    scheduler_add_task(new terminalTask(PRIORITY_HIGH));
+    //scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
-    scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+    //scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
+
+    scheduler_add_task(new gpsTask(PRIORITY_CRITICAL));
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
     #if 0
