@@ -56,59 +56,7 @@ void dc_check(void){
 
 }
 
-//void set_motors_pwm(void)
-//{
-//
-//	mDirection_cmd_msg.MOTORIO_DIRECTION_direction== = motor_msg.MOTORIO_DIRECTION_turn_cmd;
-//    md.speed = motor_msg.MOTORIO_DIRECTION_speed_cmd;
-//
-//    if (md.turn == left)
-//    { // turn hard left
-//        MotorControl.setServo(HARD_LEFT);
-//    }
-//    else if(md.turn==s_left)
-//    { // turn slight left
-//        MotorControl.setServo(S_LEFT);
-//    }
-//    else if(md.turn==straight)
-//    { // keep straight
-//        MotorControl.setServo(STRAIGHT);
-//    }
-//    else if(md.turn==s_right)
-//    { // turn slight right
-//        MotorControl.setServo(S_RIGHT);
-//    }
-//    else if(md.turn==right)
-//    { // turn hard right
-//        MotorControl.setServo(HARD_RIGHT);
-//    }
-//
-//    //--------------------------- Speed of DC Motor ------------------------
-//    LD.setNumber(white_mark_count); // Show white_mark_count on Segment display for speed feedback
-//
-//    if (md.speed == stop)
-//    { // Stop motor
-//        speed_factor = dc_stop;
-//        desired_count = 0;
-//    }
-//    else if (md.speed == slow)
-//    { // Slow speed
-//        speed_factor = dc_slow;
-//        desired_count = dc_slow_count;
-//
-//    }
-//    else if (md.speed == normal)
-//    { // Normal Speed
-//        speed_factor = dc_normal;
-//        desired_count = dc_normal_count;
-//
-//    }
-//    else if (md.speed == turbo)
-//    { // Turbo Speed
-//        speed_factor = dc_turbo;
-//        desired_count = dc_turbo_count;
-//    }
-//}
+
 void servo_init(void)
 {
 	//printf("Inite\n");
