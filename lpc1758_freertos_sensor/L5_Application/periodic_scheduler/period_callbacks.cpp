@@ -31,7 +31,32 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
+#include "string.h"
+#include "_can_dbc//generated_can.h"
+#include "can.h"
+#include <stdio.h>
 
+const uint32_t            RESET__MIA_MS = 30;
+const RESET_t              RESET__MIA_MSG = { 2 };
+
+
+RESET_t reset_cmd_msg = { 0 };
+
+
+
+bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
+
+{
+    can_msg_t can_msg = { 0 };
+    can_msg.msg_id  = mid;
+    can_msg.frame_fields.data_len = dlc;
+    memcpy(can_msg.data.bytes, bytes, dlc);
+
+    printf("sending..");
+
+    return CAN_tx(can1, &can_msg, 0);
+
+}
 
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -48,6 +73,10 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+    CAN_init(can1,100, 20, 20, 0, 0);
+    CAN_bypass_filter_accept_all_msgs();
+
+    CAN_reset_bus(can1);
     return true; // Must return true upon success
 }
 
@@ -64,14 +93,53 @@ bool period_reg_tlm(void)
  * The argument 'count' is the number of times each periodic task is called.
  */
 
-void period_1Hz(uint32_t count)
+void period_1Hz(uint32_t count)   // transmitter
 {
-    LE.toggle(1);
+	if(CAN_is_bus_off(can1))
+	CAN_reset_bus(can1);
+
+     	 LD.setNumber(20);
+
+     	SENSOR_HEARTBEAT_t sensor_heartbeat={0};
+     	sensor_heartbeat.SENSOR_HEARTBEAT_data=1;
+
+
+
+	   if (dbc_encode_and_send_SENSOR_HEARTBEAT(&sensor_heartbeat))
+	   {
+         LD.setNumber(90);
+	    }
+
+	LE.toggle(1);
 }
 
-void period_10Hz(uint32_t count)
+void period_10Hz(uint32_t count)  // receiver
 {
-    LE.toggle(2);
+	can_msg_t can_msg;
+
+	 LD.setNumber(20);
+	 while (CAN_rx(can1, &can_msg, 0))
+	{
+	  LE.off(2);
+
+	 dbc_msg_hdr_t can_msg_hdr;
+	 can_msg_hdr.dlc = can_msg.frame_fields.data_len;
+	 can_msg_hdr.mid = can_msg.msg_id;
+
+	dbc_decode_RESET(&reset_cmd_msg, can_msg.data.bytes, &can_msg_hdr);
+	          printf("%d\n",can_msg.msg_id);
+	    }
+
+	      if(dbc_handle_mia_RESET(&reset_cmd_msg, 10))
+	     {
+	       LE.on(2);
+	       printf("MIA occured");
+	      }
+	     else
+	      {
+	      LD.setNumber(reset_cmd_msg.RESET_data);
+	      }
+
 }
 
 void period_100Hz(uint32_t count)
