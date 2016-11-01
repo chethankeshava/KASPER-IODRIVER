@@ -103,12 +103,18 @@ void period_1Hz(uint32_t count)   // transmitter
      	SENSOR_HEARTBEAT_t sensor_heartbeat={0};
      	sensor_heartbeat.SENSOR_HEARTBEAT_data=1;
 
-
+     	SENSOR_POWER_SYNC_t sensor_power_sync={0};
+     	sensor_power_sync.SENSOR_POWER_SYNC_data=1;
 
 	   if (dbc_encode_and_send_SENSOR_HEARTBEAT(&sensor_heartbeat))
 	   {
-         LD.setNumber(90);
+         LD.setNumber(11);
 	    }
+
+	   if (dbc_encode_and_send_SENSOR_POWER_SYNC(&sensor_power_sync))
+	  	   {
+	           LD.setNumber(22);
+	  	    }
 
 	LE.toggle(1);
 }
@@ -144,6 +150,17 @@ void period_10Hz(uint32_t count)  // receiver
 
 void period_100Hz(uint32_t count)
 {
+	SENSOR_SONIC_t sensor_data;
+	     	sensor_data.SENSORS_SONIC_back=11;
+	     	sensor_data.SENSORS_SONIC_front_center=22;
+	     	sensor_data.SENSORS_SONIC_front_left=33;
+	     	sensor_data.SENSORS_SONIC_front_right=44;
+
+	     	 if (dbc_encode_and_send_SENSOR_SONIC(&sensor_data))
+	     		  	   {
+	     		           LD.setNumber(33);
+	     		  	    }
+
     LE.toggle(3);
 }
 
