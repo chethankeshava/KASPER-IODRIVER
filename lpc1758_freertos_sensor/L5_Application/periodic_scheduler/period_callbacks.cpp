@@ -39,10 +39,7 @@
 const uint32_t            RESET__MIA_MS = 30;
 const RESET_t              RESET__MIA_MSG = { 2 };
 
-
 RESET_t reset_cmd_msg = { 0 };
-
-
 
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 
@@ -52,10 +49,8 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
     can_msg.frame_fields.data_len = dlc;
     memcpy(can_msg.data.bytes, bytes, dlc);
 
-    printf("sending..");
-
+    //printf("sending..");
     return CAN_tx(can1, &can_msg, 0);
-
 }
 
 
@@ -75,7 +70,6 @@ bool period_init(void)
 {
     CAN_init(can1,100, 20, 20, 0, 0);
     CAN_bypass_filter_accept_all_msgs();
-
     CAN_reset_bus(can1);
     return true; // Must return true upon success
 }
@@ -95,78 +89,93 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)   // transmitter
 {
+	LE.setAll(0);
+
 	if(CAN_is_bus_off(can1))
 	CAN_reset_bus(can1);
-
-     	 LD.setNumber(20);
 
      	SENSOR_HEARTBEAT_t sensor_heartbeat={0};
      	sensor_heartbeat.SENSOR_HEARTBEAT_data=1;
 
-     	SENSOR_POWER_SYNC_t sensor_power_sync={0};
-     	sensor_power_sync.SENSOR_POWER_SYNC_data=1;
-
 	   if (dbc_encode_and_send_SENSOR_HEARTBEAT(&sensor_heartbeat))
 	   {
          LD.setNumber(11);
+         //printf("Heartbeat");
 	    }
 
-	   if (dbc_encode_and_send_SENSOR_POWER_SYNC(&sensor_power_sync))
-	  	   {
-	           LD.setNumber(22);
-	  	    }
+	   //     	SENSOR_POWER_SYNC_t sensor_power_sync={0};
+	   //     	sensor_power_sync.SENSOR_POWER_SYNC_data=1;
 
-	LE.toggle(1);
+//	   if (dbc_encode_and_send_SENSOR_POWER_SYNC(&sensor_power_sync))
+//	  	   {
+//	           LD.setNumber(22);
+	   //printf("Sync");
+//	  	    }
+
+//	LE.toggle(1);
 }
 
 void period_10Hz(uint32_t count)  // receiver
 {
 	can_msg_t can_msg;
 
-	 LD.setNumber(20);
 	 while (CAN_rx(can1, &can_msg, 0))
 	{
-	  LE.off(2);
-
 	 dbc_msg_hdr_t can_msg_hdr;
 	 can_msg_hdr.dlc = can_msg.frame_fields.data_len;
 	 can_msg_hdr.mid = can_msg.msg_id;
 
 	dbc_decode_RESET(&reset_cmd_msg, can_msg.data.bytes, &can_msg_hdr);
-	          printf("%d\n",can_msg.msg_id);
-	    }
+	 //  printf("message id: %d\n",can_msg.msg_id);
+	 }
+
+	  	SENSOR_SONIC_t sensor_data;
+	  	sensor_data.SENSORS_SONIC_back=11;
+	  	sensor_data.SENSORS_SONIC_front_center=22;
+	    sensor_data.SENSORS_SONIC_front_left=33;
+	  	sensor_data.SENSORS_SONIC_front_right=44;
+
+	  	if (dbc_encode_and_send_SENSOR_SONIC(&sensor_data))
+	  	     {
+	  	     LD.setNumber(33);
+	  	     //printf("Data");
+	  	      }
 
 	      if(dbc_handle_mia_RESET(&reset_cmd_msg, 10))
 	     {
-	       LE.on(2);
-	       printf("MIA occured");
+	       LE.setAll(1);
+	       //printf("MIA occured");
+	       LD.setNumber(55);
 	      }
 	     else
 	      {
-	      LD.setNumber(reset_cmd_msg.RESET_data);
+	      //LD.setNumber(reset_cmd_msg.RESET_data);
+	    	// LD.setNumber(75);
 	      }
+
+//	      if(dbc_handle_mia_STOP_CAR(&reset_cmd_msg, 10))
+//	    	     {
+//	    	       LE.setAll(1);
+//	    	       //printf("MIA occured");
+//	    	       LD.setNumber(55);
+//	    	      }
+//	    	     else
+//	    	      {
+//	    	      //LD.setNumber(reset_cmd_msg.RESET_data);
+//	    	    	// LD.setNumber(75);
+//	    	      }
+
 
 }
 
 void period_100Hz(uint32_t count)
 {
-	SENSOR_SONIC_t sensor_data;
-	     	sensor_data.SENSORS_SONIC_back=11;
-	     	sensor_data.SENSORS_SONIC_front_center=22;
-	     	sensor_data.SENSORS_SONIC_front_left=33;
-	     	sensor_data.SENSORS_SONIC_front_right=44;
-
-	     	 if (dbc_encode_and_send_SENSOR_SONIC(&sensor_data))
-	     		  	   {
-	     		           LD.setNumber(33);
-	     		  	    }
-
-    LE.toggle(3);
+//    LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-    LE.toggle(4);
+//    LE.toggle(4);
 }
