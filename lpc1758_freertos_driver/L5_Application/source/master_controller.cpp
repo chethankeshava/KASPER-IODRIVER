@@ -20,6 +20,8 @@ MOTORIO_HEARTBEAT_t can_msg_motorio_hb= {0};
 BRIDGE_HEARTBEAT_t can_msg_bridge_hb= {0};
 GEO_HEARTBEAT_t can_msg_geo_hb= {0};
 
+SENSOR_SONIC_t can_msg_sensor_data = {0};
+POWER_SYNC_ACK_t power_sync_ack = {0};
 
 const uint32_t                             MOTORIO_HEARTBEAT__MIA_MS= 3000;
 const MOTORIO_HEARTBEAT_t                  MOTORIO_HEARTBEAT__MIA_MSG={0};
@@ -29,8 +31,16 @@ const uint32_t                             BRIDGE_HEARTBEAT__MIA_MS= 3000;
 const BRIDGE_HEARTBEAT_t                   BRIDGE_HEARTBEAT__MIA_MSG={0};
 const uint32_t                             GEO_HEARTBEAT__MIA_MS = 3000;
 const GEO_HEARTBEAT_t                      GEO_HEARTBEAT__MIA_MSG={0};
+const uint32_t                             SENSOR_SONIC__MIA_MS = 300;
+const SENSOR_SONIC_t                       SENSOR_SONIC__MIA_MSG={0};
 
 
+
+/* dbc_app_send_can_msg:
+ * Functionality: Routine used by the CAN message transmit wrapper function
+ * @params: void
+ * Return type: status_t (bool)
+ */
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 {
 	can_msg_t can_msg = { 0 };
@@ -41,9 +51,11 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 	return CAN_tx(can1, &can_msg, 0);
 }
 
-/* init_can_master : Initialise CAN for master controller
- *
- *  return bool
+
+/* init_can_master:
+ * Functionality: Initialize CAN for master controller
+ * @params: void
+ *  Return type: status_t (bool)
  */
 status_t init_can_master(void)
 {
@@ -56,16 +68,40 @@ status_t init_can_master(void)
 	return status;
 }
 
+
+/* send_power_sync_ack:
+ * Functionality: Send power sync acknowledgement to all controllers.
+ *                Once acknowledgement is issued, periodic scheduler
+ *                tasks are initiated.
+ * @params: void
+ * Return type: status_t (bool)
+ */
+status_t send_power_sync_ack(void)
+{
+	status_t status = false;
+	status = dbc_encode_and_send_POWER_SYNC_ACK(&power_sync_ack);
+#ifdef DEBUG_PRINTF
+	printf("\nPower sync ack sent");
+#endif
+
+	return status;
+}
+
+
 /*
  * read_controller_heartbeat:
  * Functionality: Receive the heartbeats of all controllers. Called every 1 second.
- * @params void
+ *                The initial set of successful heartbeats from all controllers are
+ *                also considered for power sync mechanism.
+ * @params: void
  * Return type: status_t (bool)
  */
 status_t read_controller_heartbeat(void)
 {
-	status_t status = true, miastatus = false;
+	status_t status = false, miastatus = false;
+	status_t status_sensor = false, status_motorio = false, status_bridge = false, status_geo = false;
 	can_msg_t can_msg;
+
 	while (CAN_rx(can1, &can_msg, 0))
 	{
 		// Form the message header from the metadata of the arriving message
@@ -77,24 +113,29 @@ status_t read_controller_heartbeat(void)
 #endif
 		if(can_msg_hdr.mid == SENSOR_HEARTBEAT_HDR.mid )
 		{
+			status_sensor = true;
+			printf("Received SENSOR HeartBeat\n");
 #ifdef DEBUG_PRINTF
 			printf("\nReceived SENSOR HeartBeat");
 #endif
 		}
 		else if(can_msg_hdr.mid == MOTORIO_HEARTBEAT_HDR.mid )
 		{
+			status_motorio = true;
 #ifdef DEBUG_PRINTF
 			printf("\nReceived MOTORIO HeartBeat");
 #endif
 		}
 		else if(can_msg_hdr.mid == BRIDGE_HEARTBEAT_HDR.mid )
 		{
+			status_bridge = true;
 #ifdef DEBUG_PRINTF
 			printf("\nReceived BRIDGE HeartBeat");
 #endif
 		}
 		else if(can_msg_hdr.mid == GEO_HEARTBEAT_HDR.mid )
 		{
+			status_geo = true;
 #ifdef DEBUG_PRINTF
 			printf("\nReceived GEO HeartBeat");
 #endif
@@ -135,8 +176,148 @@ status_t read_controller_heartbeat(void)
 		LOG_INFO("\nGeo heartBeat MIA Occurred");
 	}
 
+	status = status_sensor & status_motorio & status_bridge & status_geo;
 	return status;
 }
+
+
+/*
+ * receive_sensor_data:
+ * Functionality: Receive the CAN data sent by the sensors
+ * @params: void
+ * Return type: SENSOR_SONIC_t
+ */
+SENSOR_SONIC_t receive_sensor_data(void)
+{
+	can_msg_t can_msg;
+	status_t status = true, miastatus = false;
+
+	if(CAN_rx(can1, &can_msg, 0))
+	{
+		// Form the message header from the metadata of the arriving message
+		dbc_msg_hdr_t can_msg_hdr;
+		can_msg_hdr.dlc = can_msg.frame_fields.data_len;
+		can_msg_hdr.mid = can_msg.msg_id;
+
+		if(can_msg_hdr.mid == SENSOR_SONIC_HDR.mid )
+		{
+			LD.setNumber(0);
+			status = dbc_decode_SENSOR_SONIC(&can_msg_sensor_data, can_msg.data.bytes, &can_msg_hdr);
+			if(!status)
+				printf("\nCould not read sensor values");
+#ifdef DEBUG_PRINTF
+			printf("Received SENSOR DATA\n");
+			printf("Sensor Data:\n Front Left: %u \n ", can_msg_sensor_data.SENSORS_SONIC_front_left);
+			printf("Front Center: %u \n", can_msg_sensor_data.SENSORS_SONIC_front_center);
+			printf("Front Right: %u \n", can_msg_sensor_data.SENSORS_SONIC_front_right);
+			printf("Back: %u\n", can_msg_sensor_data.SENSORS_SONIC_back);
+#endif
+		}
+	}
+	miastatus = dbc_handle_mia_SENSOR_SONIC(&can_msg_sensor_data, 100);
+	if(miastatus == true)
+	{
+#ifdef DEBUG_PRINTF
+		printf("Sensor Data MIA\n");
+#endif
+		LD.setNumber(99);
+		LOG_INFO("Sensor Data MIA Occurred\n");
+	}
+
+	return can_msg_sensor_data;
+}
+
+
+/*
+ * obstacle_avoidance_and_drive:
+ * Functionality: Algorithm to control the motor based on the sensor values.
+ *                Obstacles are indicated by the sensor values.
+ * @params: void
+ * Return type: status_t (bool)
+ */
+status_t avoid_obstacle_and_drive(void)
+{
+	status_t status = true;
+	SENSOR_SONIC_t sensor_data = {0};
+	MOTORIO_DIRECTION_t motor_cmd = {0};
+
+	sensor_data = receive_sensor_data();
+	uint16_t sensor_left = sensor_data.SENSORS_SONIC_front_left;
+	uint16_t sensor_center = sensor_data.SENSORS_SONIC_front_center;
+	uint16_t sensor_right = sensor_data.SENSORS_SONIC_front_right;
+
+	if((sensor_left <= 60) && (sensor_center <= 60) && (sensor_right <= 60))
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+	}
+	else if(((sensor_left > 60) && (sensor_left <= 120)) && (sensor_right > 120))
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = HARD_RIGHT;
+	}
+	else if(((sensor_right > 60) && (sensor_right <= 120)) && (sensor_left > 120))
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = HARD_LEFT;
+	}
+	else if(((sensor_left > 60) && (sensor_left <= 120)) &&
+			((sensor_center > 60) && (sensor_center <= 120)) &&
+			((sensor_right > 60) && (sensor_right <= 120)))
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+	}
+#ifdef DEBUG_PRINTF
+	printf("\nSensor value: Left = %u | Center = %u | Right = %u", sensor_left, sensor_center, sensor_right);
+	printf("\nMotor value: Speed = %u | Direction = %u | Turn = %u",motor_cmd.MOTORIO_DIRECTION_speed, motor_cmd.MOTORIO_DIRECTION_direction, motor_cmd.MOTORIO_DIRECTION_turn);
+#endif
+
+	status = dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
+
+	return status;
+}
+
+
+/*
+ * cmd_from_app:
+ * Functionality: Receive Start and Stop Commands from the Application
+ * @params: void
+ * Return type: status_t (bool)
+ */
+status_t cmd_from_app(void)
+{
+	status_t status = false;
+	can_msg_t can_msg;
+	while (CAN_rx(can1, &can_msg, 0))
+	{
+		if(can_msg.msg_id == START_CMD_APP_HDR.mid)
+		{
+			/* Start the  motor */
+			MOTORIO_DIRECTION_t motor_cmd;
+			motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+			motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+			motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+			status = dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
+		}
+		else if(can_msg.msg_id == STOP_CMD_APP_HDR.mid)
+		{
+			/* Stop the car */
+			MOTORIO_DIRECTION_t motor_cmd;
+			motor_cmd.MOTORIO_DIRECTION_speed = STOP;
+			motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+			motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+			status = dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
+		}
+	}
+
+	return status;
+}
+
 
 /*
  * send_bridge_ack:
@@ -152,10 +333,12 @@ status_t send_bridge_ack(void)
 	RECEIVE_START_ACK_t ack_data = {0};
 	dbc_encode_and_send_RECEIVE_START_ACK(&ack_data);
 #ifdef DEBUG_PRINTF
-	printf("Send ACK BRidge\n");
+	printf("Send ACK to Bridge to receive data\n");
 #endif
+
 	return status;
 }
+
 
 /*
  * is_bus_off:
@@ -168,9 +351,8 @@ void is_bus_off(void)
 	if(CAN_is_bus_off(can1))
 	{
 #ifdef DEBUG_PRINTF
-		printf("Bus is Off\n");
+		printf("\nBus is Off");
 #endif
 		CAN_reset_bus(can1);
 	}
 }
-
