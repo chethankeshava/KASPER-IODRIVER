@@ -40,15 +40,6 @@
 #include "can.h"
 #include "../../_can_dbc/generated_can.h"
 
-#define Case_STOP_CAR 						0
-#define Case_RESET							1
-#define Case_BRIDGE_POWER_SYNC_data 		13
-#define Case_RECEIVE_START_ACK				130
-#define Case_CURRENT_LOCATION_ACK			170
-#define Case_GPS_LOCATION					180
-
-
-
 extern char stored_Bluetooth_data[96];
 extern char Bluetooth_Buffer[96];
 
@@ -132,19 +123,20 @@ void period_10Hz(uint32_t count)
 		can_msg_hdr.dlc = can_msg_Info.frame_fields.data_len;
 		can_msg_hdr.mid = can_msg_Info.msg_id;
 		//u0_dbg_printf("id :%d\n",can_msg_hdr.mid);
-		if(can_msg_Info.msg_id == Case_STOP_CAR)
+		if(can_msg_Info.msg_id == STOP_CAR_HDR.mid)
 			printf("Case_STOP_CAR\n");
-		if(can_msg_Info.msg_id == Case_RESET)
+		if(can_msg_Info.msg_id == RESET_HDR.mid)
 			dbc_decode_RESET(&REST_Info, can_msg_Info.data.bytes, &can_msg_hdr);
-		if(can_msg_Info.msg_id == Case_CURRENT_LOCATION_ACK)
+		if(can_msg_Info.msg_id == CURRENT_LOCATION_ACK_HDR.mid)
 			printf("Case_CURRENT_LOCATION_ACK\n");
-		if(can_msg_Info.msg_id == Case_RECEIVE_START_ACK)
+		if(can_msg_Info.msg_id == RECEIVE_START_ACK_HDR.mid)
 			printf("Case_RECEIVE_START_ACKt\n");
-		if(can_msg_Info.msg_id == Case_BRIDGE_POWER_SYNC_data)
+		if(can_msg_Info.msg_id == BRIDGE_POWER_SYNC_HDR.mid)
 			printf("BRIDGE_POWER_SYNC_data\n");
-		if(can_msg_Info.msg_id == Case_GPS_LOCATION)
+		if(can_msg_Info.msg_id == GPS_LOCATION_HDR.mid)
 		{
     		dbc_decode_GPS_LOCATION(&GPS_LOCATION_RECEIVE, can_msg_Info.data.bytes, &can_msg_hdr);
+    		printf("GPS_LOCATION_RECEIVE\n");
     		//u0_dbg_printf("Latitude: %f ,Longitude: %f \n",GPS_LOCATION_DATA.GPS_LOCATION_latitude,GPS_LOCATION_DATA.GPS_LOCATION_longitude);
 		}
 		if(dbc_handle_mia_RESET(&REST_Info, 1))
