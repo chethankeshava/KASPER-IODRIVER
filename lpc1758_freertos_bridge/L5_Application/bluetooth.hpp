@@ -15,7 +15,7 @@
 #include "uart_dev.hpp"
 #include "can.h"
 #include "periodic_scheduler/periodic_callback.h"
-
+#if 0
 
 #define 	UART_THR_MASKBIT   		((uint8_t)0xFF) 	/*!< UART Transmit Holding mask bit (8 bits) */
 #define 	UART_IIR_INTID_RLS		((uint32_t)(3<<1)) 	/*!<Interrupt identification: Receive line status*/
@@ -30,6 +30,7 @@
 #define 	UART_LSR_BITMASK   		((uint8_t)(0xFF))
 #define UART_LSR_RDR   				((uint8_t)(1<<0))
 #define UART_IIR_INTID_THRE			((uint32_t)(1<<1)) 	/*!<Interrupt identification: THRE interrupt*/
+#endif
 
 typedef struct sensorData{
 	float latitude;				///< Stores Latitude
@@ -39,6 +40,9 @@ typedef struct sensorData{
 bool uart_putchar(char character);
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8]);
 void canBusErrorCallBackRx(uint32_t ibits);
+void Receive_BluetoothData();
+void Can_Receive_ID_Task();
+void Check_Start_STOP_Condition();
 class Bluetooth_Enable : public scheduler_task
 {
 	private:
@@ -55,6 +59,7 @@ class Bluetooth_Enable : public scheduler_task
         }*/
         bool init(void);
         bool run(void *p);
+
 };
 
 
