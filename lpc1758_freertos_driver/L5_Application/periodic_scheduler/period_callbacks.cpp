@@ -77,15 +77,10 @@ void period_1Hz(uint32_t count)
 	is_bus_off();
 	read_controller_heartbeat();
 #endif
-    LE.toggle(1);
 }
 
 void period_10Hz(uint32_t count)
 {
-#ifdef MASTER /* To test tx from master */
-	send_bridge_ack();
-	send_reset();
-#endif
     LE.toggle(2);
 }
 
