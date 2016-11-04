@@ -18,26 +18,14 @@
 class MotorController : public SingletonTemplate<MotorController>
 {
     public:
-
-        void setDC(float v)
-        {
-        	driveMotor.set(v);
-        }
-        void setServo(float v)
-        {
-        	steerMotor.set(v);
-        }
-
+        void setDC(float v);
+        void setServo(float v);
     private:
         PWM driveMotor;
         PWM steerMotor;
 
-        MotorController() : driveMotor(PWM::pwm2), steerMotor(PWM::pwm1)
-        {
-
-        }
-
-        friend class SingletonTemplate<MotorController>; ///< Friend class used for Singleton Template
+        MotorController();
+        friend class SingletonTemplate<MotorController>;
 };
 
 #define MotorControl MotorController::getInstance()
@@ -46,14 +34,13 @@ class MotorController : public SingletonTemplate<MotorController>
 extern "C"{
 #endif
 
-void servo_init(void);
-void dc_check(void);
 
 void servo_left(void);
 void servo_right(void);
 void servo_straight(void);
 void dc_accelerate(void);
 void dc_stop(void);
+void drive_car(void);
 
 
 

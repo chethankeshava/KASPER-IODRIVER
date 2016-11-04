@@ -38,20 +38,11 @@
 #include "motor.hpp"
 #include "lpc_pwm.hpp"
 
-#define H_LEFT                              9.0
-#define S_LEFT                              8.0
-#define H_RIGHT                             5.7
-#define S_RIGHT                             6.5
-#define STRAIGHT                            7.5
-
-can_msg_t can_msg2;
-const uint32_t            RESET__MIA_MS = 3;
-
-const RESET_t      RESET__MIA_MSG = { 4 };
-
-RESET_t reset_cmd_msg = { 0 };
-
-
+#define FULL_LEFT                              9.0
+#define HALF_LEFT                              8.0
+#define FULL_RIGHT                             5.7
+#define HALF_RIGHT                             6.5
+#define STRAIGHT                           	   7.5
 
 
 
@@ -80,11 +71,8 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 {
 
 	can_msg_t can_msg = { 0 };
-
 	can_msg.msg_id= mid;
-
 	can_msg.frame_fields.data_len = dlc;
-
 	memcpy(can_msg.data.bytes, bytes, dlc);
 
 	// printf("sending\n");
@@ -94,12 +82,8 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	//	dc_check();
-	//	servo_init();
 	CAN_init(can1, 100, 5, 5, 0, 0);
-
 	CAN_reset_bus(can1);
-
 
 	//RX PART
 	CAN_bypass_filter_accept_all_msgs();
@@ -123,41 +107,27 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-	//	if(SW.getSwitch(3))
-	//		{
-	//		servo_left();
-	//		}
-	//		if(SW.getSwitch(2))
-	//		{
-	//			servo_right();
-	//
-	//		}
-	//		if(SW.getSwitch(1))
-	//		{
-	//				servo_straight();
-	//
-	//		}
-
-	if(SW.getSwitch(3))
-	{
-		dc_accelerate();
-		puts("acc");
-	}
-	if(SW.getSwitch(2))
-	{
-		puts("stop");
-
-		dc_stop();
-
-	}
-
+	//	//	if(SW.getSwitch(3))
+	//	//		{
+	//	//		servo_left();
+	//	//		}
+	//	//		if(SW.getSwitch(2))
+	//	//		{
+	//	//			servo_right();
+	//	//
+	//	//		}
+	//	//		if(SW.getSwitch(1))
+	//	//		{
+	//	//				servo_straight();
+	//	//
+	//	//		}
+	//dc_accelerate();
 
 	if(CAN_is_bus_off(can1))
 
 	{
-
+		puts(" Y ");
 		CAN_reset_bus(can1);
-
 	}
 
 	MOTORIO_HEARTBEAT_t motorio_heartbeat={0};
@@ -168,49 +138,32 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-	while (CAN_rx(can1, &can_msg2, 0))
+	drive_car();
 
-	{
-
-		LE.off(1);
-
-		dbc_msg_hdr_t can_msg_hdr;
-
-		can_msg_hdr.dlc = can_msg2.frame_fields.data_len;
-
-		can_msg_hdr.mid = can_msg2.msg_id;
-		printf("%d\n",can_msg2.msg_id);
-		switch(can_msg2.msg_id)
-		{
-
-		case 1:
-
-			dbc_decode_RESET(&reset_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
-
-			break;
-
-		default:
-
-			//printf("MID not defined");
-
-			break;
-
-		}
-
-	}
-
-	if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
-
-	{
-		LE.on(1);
-		reset_cmd_msg.RESET_data=RESET__MIA_MSG.RESET_data;
-
-		LD.setNumber(reset_cmd_msg.RESET_data);
-
-		LE.on(1);
-
-	}
+	//	if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
+	//
+	//	{
+	//		LE.on(1);
+	//		reset_cmd_msg.RESET_data=RESET__MIA_MSG.RESET_data;
+	//
+	//		LE.on(1);
+	//
+	//	}
+	//	if(dbc_handle_mia_MOTORIO_DIRECTION(&mDirection_cmd_msg, 1))
+	//
+	//	{
+	//		LE.on(1);
+	//		mDirection_cmd_msg.MOTORIO_DIRECTION_direction=MOTORIO_DIRECTION__MIA_MSG.MOTORIO_DIRECTION_direction;
+	//
+	//
+	//		LE.on(1);
+	//		LD.setNumber(41);
+	//
+	//
+	//	}
 	//	LE.toggle(2);
+
+
 }
 
 void period_100Hz(uint32_t count)
