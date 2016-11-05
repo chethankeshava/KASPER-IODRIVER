@@ -15,11 +15,28 @@
 #include <stdio.h>
 
 
+enum MOTOR_TURN
+{
+	SLIGHT_LEFT = -2,
+	HARD_LEFT,
+	STRAIGHT,
+	SLIGHT_RIGHT,
+	HARD_RIGHT,
+};
+enum MOTOR_SPEED
+{
+	STOP = 0,
+	SLOW,
+	NORMAL,
+	FAST
+};
+
 class MotorController : public SingletonTemplate<MotorController>
 {
     public:
         void setDC(float v);
         void setServo(float v);
+
     private:
         PWM driveMotor;
         PWM steerMotor;

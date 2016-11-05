@@ -107,33 +107,16 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-	//	//	if(SW.getSwitch(3))
-	//	//		{
-	//	//		servo_left();
-	//	//		}
-	//	//		if(SW.getSwitch(2))
-	//	//		{
-	//	//			servo_right();
-	//	//
-	//	//		}
-	//	//		if(SW.getSwitch(1))
-	//	//		{
-	//	//				servo_straight();
-	//	//
-	//	//		}
-	//dc_accelerate();
-
 	if(CAN_is_bus_off(can1))
 
 	{
-		puts(" Y ");
+		puts(" Bus OFF ");
 		CAN_reset_bus(can1);
 	}
 
 	MOTORIO_HEARTBEAT_t motorio_heartbeat={0};
 	motorio_heartbeat.MOTORIO_HEARTBEAT_data=1;
 	dbc_encode_and_send_MOTORIO_HEARTBEAT(&motorio_heartbeat);
-
 }
 
 void period_10Hz(uint32_t count)
