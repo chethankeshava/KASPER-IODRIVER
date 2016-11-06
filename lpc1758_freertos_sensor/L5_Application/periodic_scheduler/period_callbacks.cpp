@@ -46,23 +46,24 @@ GPIO inputPWPin(P2_1);    //input-PW Pin--Center
 GPIO outputRxPin(P2_0);  //output-RX Pin--Center
 GPIO inputPWPinLeft(P2_3);    //input-PW Pin--Left
 GPIO outputRxPinLeft(P2_2);  //output-RX Pin--Left
-GPIO inputPWPinRight(P2_5);    //input-PW Pin--Left
-GPIO outputRxPinRight(P2_4);  //output-RX Pin--Left
+GPIO inputPWPinRight(P2_5);    //input-PW Pin--right
+GPIO outputRxPinRight(P2_4);  //output-RX Pin--right
 
 SENSOR_SONIC_t sensor_msg= { 0 };
 
-	uint64_t T1,T2;
+	uint64_t T1;
+	uint64_t T2_Right,T2_Left,T2_Center;
 	int Distance_left,Distance_center,Distance_right =0;
 
-//	bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
-//	{
-//	    can_msg_t can_msg = { 0 };
-//	    can_msg.msg_id  = mid;
-//	    can_msg.frame_fields.data_len = dlc;
-//	    memcpy(can_msg.data.bytes, bytes, dlc);
-//	    //printf("sending......");
-//	    return CAN_tx(can1, &can_msg, 0);
-//	}
+	bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
+	{
+	    can_msg_t can_msg = { 0 };
+	    can_msg.msg_id  = mid;
+	    can_msg.frame_fields.data_len = dlc;
+	    memcpy(can_msg.data.bytes, bytes, dlc);
+	   printf("sending......\n");
+	    return CAN_tx(can1, &can_msg, 0);
+	}
 
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -83,53 +84,49 @@ void eintCallbackright_Rise()
 
 void eintCallbackright_Fall_Center()
 {
-	T2=sys_get_uptime_us();
+	T2_Center=sys_get_uptime_us();
   //Note down the system start time for right sensor ( start_right_time)
 //	printf("T2: %d\n",T2);
-	Distance_center=(T2-T1)/147;
+	Distance_center=(T2_Center-T1)/147;
 
 	sensor_msg.SENSORS_SONIC_front_center=Distance_center;
 
-	printf("Distance Center: %d    ",Distance_center);
-	//printf("Distance: %d\n",sensor_msg.SENSORS_SONIC_front_center);
-
+//	printf("Distance Center: %d    ",Distance_center);
+	//printf("Distance Center: %d ",sensor_msg.SENSORS_SONIC_front_center);
 }
 
 void eintCallbackright_Fall_Left()
 {
-	T2=sys_get_uptime_us();
+	T2_Left=sys_get_uptime_us();
   //Note down the system start time for right sensor ( start_right_time)
 //	printf("T2: %d\n",T2);
-	Distance_left=(T2-T1)/147;
+	Distance_left=(T2_Left-T1)/147;
 
 	sensor_msg.SENSORS_SONIC_front_left=Distance_left;
 
-	printf("Distance Left: %d   ",Distance_left);
-	//printf("Distance: %d\n",sensor_msg.SENSORS_SONIC_front_center);
-
+	//printf("Distance Left: %d   ",Distance_left);
+	//printf("Distance Left: %d ",sensor_msg.SENSORS_SONIC_front_left);
 }
 
 void eintCallbackright_Fall_Right()
 {
-	T2=sys_get_uptime_us();
+	T2_Right=sys_get_uptime_us();
   //Note down the system start time for right sensor ( start_right_time)
 //	printf("T2: %d\n",T2);
-	Distance_right=(T2-T1)/147;
+	Distance_right=(T2_Right-T1)/147;
 
 	sensor_msg.SENSORS_SONIC_front_right=Distance_right;
 
-	printf("Distance Right: %d   \n",Distance_right);
-	//printf("Distance: %d\n",sensor_msg.SENSORS_SONIC_front_center);
-
+	//printf("Distance Right: %d   \n",Distance_right);
+	//printf("Distance Right: %d\n",sensor_msg.SENSORS_SONIC_front_right);
 }
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	printf("init\n");
+	//printf("init\n");
 	CAN_init(can1,100, 20, 20, 0, 0);
 		CAN_reset_bus(can1);
-		 // LD.setNumber(99);
 
 	inputPWPin.setAsInput();
 	inputPWPin.enablePullDown();
@@ -146,13 +143,12 @@ bool period_init(void)
 	outputRxPinRight.setAsOutput();
 	outputRxPinRight.setHigh();
 
-	eint3_enable_port2(3, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback
-	eint3_enable_port2(3, eint_falling_edge, eintCallbackright_Fall_Left); //Interrupt function callback
-	eint3_enable_port2(1, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback
-	eint3_enable_port2(1, eint_falling_edge, eintCallbackright_Fall_Center); //Interrupt function callback
-	eint3_enable_port2(5, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback
-	eint3_enable_port2(5, eint_falling_edge, eintCallbackright_Fall_Right); //Interrupt function callback
-
+	eint3_enable_port2(3, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback left
+	eint3_enable_port2(3, eint_falling_edge, eintCallbackright_Fall_Left); //Interrupt function callback left
+	eint3_enable_port2(1, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback center
+	eint3_enable_port2(1, eint_falling_edge, eintCallbackright_Fall_Center); //Interrupt function callback center
+	eint3_enable_port2(5, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback right
+	eint3_enable_port2(5, eint_falling_edge, eintCallbackright_Fall_Right); //Interrupt function callback right
 
     return true; // Must return true upon success
 }
@@ -172,22 +168,24 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
    // LE.toggle(1);
-
 	 if(CAN_is_bus_off(can1))
 		  {
 			  CAN_reset_bus(can1);
 			  printf("BUS is off!!!!!!");
 		  }
-
 }
 
 void period_10Hz(uint32_t count)
 {
-//	if(dbc_encode_and_send_SENSOR_SONIC(&sensor_msg))
-//    {
-//   LD.setNumber(88);
-//	   printf("center:%d\n",sensor_msg.SENSORS_SONIC_front_center);
-//    }
+	// LE.toggle(2);
+	if(dbc_encode_and_send_SENSOR_SONIC(&sensor_msg))
+    {
+   LD.setNumber(88);
+   printf("values:");
+	  printf("center:%d ",sensor_msg.SENSORS_SONIC_front_center);
+	   printf("left:%d ",sensor_msg.SENSORS_SONIC_front_left);
+	   printf("right:%d\n",sensor_msg.SENSORS_SONIC_front_right);
+    }
 }
 
 void period_100Hz(uint32_t count)
