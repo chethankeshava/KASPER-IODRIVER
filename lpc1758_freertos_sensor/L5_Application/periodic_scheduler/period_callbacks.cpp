@@ -35,26 +35,35 @@
 #include "_can_dbc//generated_can.h"
 #include "can.h"
 #include <stdio.h>
+#include "soft_timer.hpp"
+#include "lpc_timers.h"
+#include "utilities.h"
+#include <math.h>
+#include "gpio.hpp"
+#include "eint.h"
 
-const uint32_t            RESET__MIA_MS = 30;
-const RESET_t              RESET__MIA_MSG = { 2 };
+GPIO inputPWPin(P2_1);    //input-PW Pin--Center
+GPIO outputRxPin(P2_0);  //output-RX Pin--Center
+GPIO inputPWPinLeft(P2_3);    //input-PW Pin--Left
+GPIO outputRxPinLeft(P2_2);  //output-RX Pin--Left
+GPIO inputPWPinRight(P2_5);    //input-PW Pin--Left
+GPIO outputRxPinRight(P2_4);  //output-RX Pin--Left
 
-RESET_t reset_cmd_msg = { 0 };
+SENSOR_SONIC_t sensor_msg= { 0 };
 
-bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
+	uint64_t T1,T2;
+	int Distance_left,Distance_center,Distance_right =0;
 
-{
-    can_msg_t can_msg = { 0 };
-    can_msg.msg_id  = mid;
-    can_msg.frame_fields.data_len = dlc;
-    memcpy(can_msg.data.bytes, bytes, dlc);
+//	bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
+//	{
+//	    can_msg_t can_msg = { 0 };
+//	    can_msg.msg_id  = mid;
+//	    can_msg.frame_fields.data_len = dlc;
+//	    memcpy(can_msg.data.bytes, bytes, dlc);
+//	    //printf("sending......");
+//	    return CAN_tx(can1, &can_msg, 0);
+//	}
 
-    //printf("sending..");
-    return CAN_tx(can1, &can_msg, 0);
-}
-
-
-/// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 /**
@@ -65,12 +74,86 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
  */
 const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 
+void eintCallbackright_Rise()
+{
+	T1=sys_get_uptime_us();
+//	printf("T1: %d\n",T1);
+  //Note down the system start time for right sensor ( start_right_time)
+}
+
+void eintCallbackright_Fall_Center()
+{
+	T2=sys_get_uptime_us();
+  //Note down the system start time for right sensor ( start_right_time)
+//	printf("T2: %d\n",T2);
+	Distance_center=(T2-T1)/147;
+
+	sensor_msg.SENSORS_SONIC_front_center=Distance_center;
+
+	printf("Distance Center: %d    ",Distance_center);
+	//printf("Distance: %d\n",sensor_msg.SENSORS_SONIC_front_center);
+
+}
+
+void eintCallbackright_Fall_Left()
+{
+	T2=sys_get_uptime_us();
+  //Note down the system start time for right sensor ( start_right_time)
+//	printf("T2: %d\n",T2);
+	Distance_left=(T2-T1)/147;
+
+	sensor_msg.SENSORS_SONIC_front_left=Distance_left;
+
+	printf("Distance Left: %d   ",Distance_left);
+	//printf("Distance: %d\n",sensor_msg.SENSORS_SONIC_front_center);
+
+}
+
+void eintCallbackright_Fall_Right()
+{
+	T2=sys_get_uptime_us();
+  //Note down the system start time for right sensor ( start_right_time)
+//	printf("T2: %d\n",T2);
+	Distance_right=(T2-T1)/147;
+
+	sensor_msg.SENSORS_SONIC_front_right=Distance_right;
+
+	printf("Distance Right: %d   \n",Distance_right);
+	//printf("Distance: %d\n",sensor_msg.SENSORS_SONIC_front_center);
+
+}
+
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    CAN_init(can1,100, 20, 20, 0, 0);
-    CAN_bypass_filter_accept_all_msgs();
-    CAN_reset_bus(can1);
+	printf("init\n");
+	CAN_init(can1,100, 20, 20, 0, 0);
+		CAN_reset_bus(can1);
+		 // LD.setNumber(99);
+
+	inputPWPin.setAsInput();
+	inputPWPin.enablePullDown();
+	outputRxPin.setAsOutput();
+	outputRxPin.setHigh();
+
+	inputPWPinLeft.setAsInput();
+	inputPWPinLeft.enablePullDown();
+	outputRxPinLeft.setAsOutput();
+	outputRxPinLeft.setHigh();
+
+	inputPWPinRight.setAsInput();
+	inputPWPinRight.enablePullDown();
+	outputRxPinRight.setAsOutput();
+	outputRxPinRight.setHigh();
+
+	eint3_enable_port2(3, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback
+	eint3_enable_port2(3, eint_falling_edge, eintCallbackright_Fall_Left); //Interrupt function callback
+	eint3_enable_port2(1, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback
+	eint3_enable_port2(1, eint_falling_edge, eintCallbackright_Fall_Center); //Interrupt function callback
+	eint3_enable_port2(5, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback
+	eint3_enable_port2(5, eint_falling_edge, eintCallbackright_Fall_Right); //Interrupt function callback
+
+
     return true; // Must return true upon success
 }
 
@@ -81,101 +164,40 @@ bool period_reg_tlm(void)
     return true; // Must return true upon success
 }
 
-
 /**
  * Below are your periodic functions.
  * The argument 'count' is the number of times each periodic task is called.
  */
 
-void period_1Hz(uint32_t count)   // transmitter
+void period_1Hz(uint32_t count)
 {
-	LE.setAll(0);
+   // LE.toggle(1);
 
-	if(CAN_is_bus_off(can1))
-	CAN_reset_bus(can1);
+	 if(CAN_is_bus_off(can1))
+		  {
+			  CAN_reset_bus(can1);
+			  printf("BUS is off!!!!!!");
+		  }
 
-     	SENSOR_HEARTBEAT_t sensor_heartbeat={0};
-     	sensor_heartbeat.SENSOR_HEARTBEAT_data=1;
-
-	   if (dbc_encode_and_send_SENSOR_HEARTBEAT(&sensor_heartbeat))
-	   {
-         LD.setNumber(11);
-         //printf("Heartbeat");
-	    }
-
-	   //     	SENSOR_POWER_SYNC_t sensor_power_sync={0};
-	   //     	sensor_power_sync.SENSOR_POWER_SYNC_data=1;
-
-//	   if (dbc_encode_and_send_SENSOR_POWER_SYNC(&sensor_power_sync))
-//	  	   {
-//	           LD.setNumber(22);
-	   //printf("Sync");
-//	  	    }
-
-//	LE.toggle(1);
 }
 
-void period_10Hz(uint32_t count)  // receiver
+void period_10Hz(uint32_t count)
 {
-	can_msg_t can_msg;
-
-	 while (CAN_rx(can1, &can_msg, 0))
-	{
-	 dbc_msg_hdr_t can_msg_hdr;
-	 can_msg_hdr.dlc = can_msg.frame_fields.data_len;
-	 can_msg_hdr.mid = can_msg.msg_id;
-
-	dbc_decode_RESET(&reset_cmd_msg, can_msg.data.bytes, &can_msg_hdr);
-	 //  printf("message id: %d\n",can_msg.msg_id);
-	 }
-
-	  	SENSOR_SONIC_t sensor_data;
-	  	sensor_data.SENSORS_SONIC_back=11;
-	  	sensor_data.SENSORS_SONIC_front_center=22;
-	    sensor_data.SENSORS_SONIC_front_left=33;
-	  	sensor_data.SENSORS_SONIC_front_right=44;
-
-	  	if (dbc_encode_and_send_SENSOR_SONIC(&sensor_data))
-	  	     {
-	  	     LD.setNumber(33);
-	  	     //printf("Data");
-	  	      }
-
-	      if(dbc_handle_mia_RESET(&reset_cmd_msg, 10))
-	     {
-	       LE.setAll(1);
-	       //printf("MIA occured");
-	       LD.setNumber(55);
-	      }
-	     else
-	      {
-	      //LD.setNumber(reset_cmd_msg.RESET_data);
-	    	// LD.setNumber(75);
-	      }
-
-//	      if(dbc_handle_mia_STOP_CAR(&reset_cmd_msg, 10))
-//	    	     {
-//	    	       LE.setAll(1);
-//	    	       //printf("MIA occured");
-//	    	       LD.setNumber(55);
-//	    	      }
-//	    	     else
-//	    	      {
-//	    	      //LD.setNumber(reset_cmd_msg.RESET_data);
-//	    	    	// LD.setNumber(75);
-//	    	      }
-
-
+//	if(dbc_encode_and_send_SENSOR_SONIC(&sensor_msg))
+//    {
+//   LD.setNumber(88);
+//	   printf("center:%d\n",sensor_msg.SENSORS_SONIC_front_center);
+//    }
 }
 
 void period_100Hz(uint32_t count)
 {
-//    LE.toggle(3);
+    //LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-//    LE.toggle(4);
+   // LE.toggle(4);
 }
