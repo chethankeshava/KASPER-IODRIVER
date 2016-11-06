@@ -32,7 +32,9 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "gps.hpp"
-
+#include "compass.hpp"
+#include "printf_lib.h"
+#include "can.h"
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -48,7 +50,13 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-    return true; // Must return true upon success
+	if(!(compassi2c.init()))
+	{
+		u0_dbg_printf("Device not present\n");
+		return false;
+	}
+
+	return true; // Must return true upon success
 }
 
 /// Register any telemetry variables
@@ -67,12 +75,21 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
     LE.toggle(1);
+    compassi2c.getHeading();
+
+	if(CAN_is_bus_off(GPS_CAN_BUS))
+	{
+		CAN_reset_bus(GPS_CAN_BUS);
+	}
+	u0_dbg_printf("Sending heart beat\n");
+    geoSendHeartBeat();
 }
 
 void period_10Hz(uint32_t count)
 {
     LE.toggle(2);
-    //geoSendGpsData();
+    geoSendHeartBeat();
+    geoSendGpsData();
 }
 
 void period_100Hz(uint32_t count)

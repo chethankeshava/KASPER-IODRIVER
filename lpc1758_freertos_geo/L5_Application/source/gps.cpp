@@ -19,7 +19,7 @@
 #define 	GPS_BAUD_RATE 					9600			///	100Kbps baud rate
 #define 	GPS_CAN_RX_QUEUE_SIZE			16
 #define 	GPS_CAN_TX_QUEUE_SIZE			16
-#define 	GPS_CAN_BUS						can1
+
 
 char gpsData[GPS_DATA_LEN];
 char gBuffer[256];							/// Global buffer for received data
@@ -196,7 +196,7 @@ gpsTask::gpsTask(uint8_t priority) :
 bool gpsTask::init(void)
 {
 
-	//gpsInit();
+	gpsInit();
 	//gpsSetRMCOnlyOutput();
 
 	//NVIC_EnableIRQ(UART2_IRQn);
@@ -211,6 +211,7 @@ bool gpsTask::run(void *p)
 	char rxBuff[256];
 	char gpsStr[256];
 	gpsUart.gets(rxBuff, sizeof(rxBuff), portMAX_DELAY);
+	u0_dbg_printf("Received data is %s\n",rxBuff);
 	strncpy(gpsStr,rxBuff,sizeof(rxBuff));
 	parseGpsData(gpsStr);
 	return true;
@@ -243,4 +244,12 @@ void geoSendGpsData()
 
 	// This function will encode the CAN data bytes, and send the CAN msg using dbc_app_send_can_msg()
 	dbc_encode_and_send_GPS_LOCATION(&gps_data);
+}
+
+void geoSendHeartBeat()
+{
+	GEO_HEARTBEAT_t heartBeat={0};
+
+	heartBeat.GEO_HEARTBEAT_data = 0xAA;
+	dbc_encode_and_send_GEO_HEARTBEAT(&heartBeat);
 }

@@ -36,19 +36,20 @@
 #include "light_sensor.hpp"
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
-
+#include "compass.hpp"
 
 /**
  * @{ Short-hand notation of getting to the on-board IO Devices
  * @ingroup BoardIO
  */
-#define AS      Acceleration_Sensor::getInstance() ///< Acceleration Sensor
-#define IS      IR_Sensor::getInstance()           ///< IR input sensor
-#define LS      Light_Sensor::getInstance()        ///< Light Sensor
-#define TS      TemperatureSensor::getInstance()   ///< Temperature Sensor
-#define LD      LED_Display::getInstance()         ///< 2-Digit LED Display
-#define LE      LED::getInstance()                 ///< 4 On-board LEDs
-#define SW      Switches::getInstance()            ///< 4 On-board Switches
+#define AS      	Acceleration_Sensor::getInstance() ///< Acceleration Sensor
+#define IS      	IR_Sensor::getInstance()           ///< IR input sensor
+#define LS      	Light_Sensor::getInstance()        ///< Light Sensor
+#define TS      	TemperatureSensor::getInstance()   ///< Temperature Sensor
+#define LD      	LED_Display::getInstance()         ///< 2-Digit LED Display
+#define LE      	LED::getInstance()                 ///< 4 On-board LEDs
+#define SW      	Switches::getInstance()            ///< 4 On-board Switches
+#define compassi2c 	compass::getInstance()
 /** @} */
 
 
