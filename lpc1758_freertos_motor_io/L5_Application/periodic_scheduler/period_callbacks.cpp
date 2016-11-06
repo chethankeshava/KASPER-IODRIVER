@@ -35,14 +35,25 @@
 #include "../_can_dbc/generated_can.h"
 #include "string.h"
 #include "stdio.h"
+#include "motor.hpp"
+#include "lpc_pwm.hpp"
+
+#define FULL_LEFT                              9.0
+#define HALF_LEFT                              8.0
+#define FULL_RIGHT                             5.7
+#define HALF_RIGHT                             6.5
+#define STRAIGHT                           	   7.5
 
 
-can_msg_t can_msg2;
-const uint32_t            RESET__MIA_MS = 3;
 
-const RESET_t      RESET__MIA_MSG = { 4 };
 
-RESET_t reset_cmd_msg = { 0 };
+//PWM steerControl(PWM::pwm1);
+
+//PWM servo1(PWM::pwm1, 50);
+//PWM servo2(PWM::pwm2, 0);
+
+// servo1.set(5.0);  ///< Set to left position
+//  servo2.set(10.0); ///< Set to right position
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -59,32 +70,25 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 
 {
 
-    can_msg_t can_msg = { 0 };
+	can_msg_t can_msg = { 0 };
+	can_msg.msg_id= mid;
+	can_msg.frame_fields.data_len = dlc;
+	memcpy(can_msg.data.bytes, bytes, dlc);
 
-    can_msg.msg_id= mid;
-
-    can_msg.frame_fields.data_len = dlc;
-
-    memcpy(can_msg.data.bytes, bytes, dlc);
-
-
-   // printf("sending\n");
-    return CAN_tx(can1, &can_msg, 0);
+	// printf("sending\n");
+	return CAN_tx(can1, &can_msg, 0);
 
 }
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
 	CAN_init(can1, 100, 5, 5, 0, 0);
-
 	CAN_reset_bus(can1);
 
-
 	//RX PART
+	CAN_bypass_filter_accept_all_msgs();
 
-	   CAN_bypass_filter_accept_all_msgs();
-
-	                        CAN_reset_bus(can1);
+	CAN_reset_bus(can1);
 	return true; // Must return true upon success
 }
 
@@ -106,79 +110,53 @@ void period_1Hz(uint32_t count)
 	if(CAN_is_bus_off(can1))
 
 	{
-
+		puts(" Bus OFF ");
 		CAN_reset_bus(can1);
-
 	}
 
-	LE.toggle(1);
 	MOTORIO_HEARTBEAT_t motorio_heartbeat={0};
 	motorio_heartbeat.MOTORIO_HEARTBEAT_data=1;
 	dbc_encode_and_send_MOTORIO_HEARTBEAT(&motorio_heartbeat);
-
-	//	  LSENSOR_CMD_t lsensor_cmd = { 0 };
-	//
-	//	    lsensor_cmd.LSENSOR_CMD_lvalue = i;
-
-	//   dbc_encode_and_send_LSENSOR_CMD(&lsensor_cmd);
 }
 
 void period_10Hz(uint32_t count)
 {
-	 while (CAN_rx(can1, &can_msg2, 0))
+	drive_car();
 
-	                            {
+	//	if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
+	//
+	//	{
+	//		LE.on(1);
+	//		reset_cmd_msg.RESET_data=RESET__MIA_MSG.RESET_data;
+	//
+	//		LE.on(1);
+	//
+	//	}
+	//	if(dbc_handle_mia_MOTORIO_DIRECTION(&mDirection_cmd_msg, 1))
+	//
+	//	{
+	//		LE.on(1);
+	//		mDirection_cmd_msg.MOTORIO_DIRECTION_direction=MOTORIO_DIRECTION__MIA_MSG.MOTORIO_DIRECTION_direction;
+	//
+	//
+	//		LE.on(1);
+	//		LD.setNumber(41);
+	//
+	//
+	//	}
+	//	LE.toggle(2);
 
-	                                     LE.off(1);
 
-	                                dbc_msg_hdr_t can_msg_hdr;
-
-	                                can_msg_hdr.dlc = can_msg2.frame_fields.data_len;
-
-	                                can_msg_hdr.mid = can_msg2.msg_id;
-	                                printf("%d\n",can_msg2.msg_id);
-	                                switch(can_msg2.msg_id)
-
-	                                {
-
-	                                case 1:
-
-	                                	dbc_decode_RESET(&reset_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
-
-	                                     break;
-
-	                                default:
-
-//	                                     printf("MID not defined");
-
-	                                     break;
-
-	                                }
-
-	                            }
-
-	                        if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
-
-	                        {
-	                        			puts("hey");
-	                        	reset_cmd_msg.RESET_data=RESET__MIA_MSG.RESET_data;
-
-	              LD.setNumber(reset_cmd_msg.RESET_data);
-
-	                     LE.on(1);
-
-	                        }
-	LE.toggle(2);
 }
 
 void period_100Hz(uint32_t count)
 {
-	LE.toggle(3);
+	//LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-	LE.toggle(4);
+	//LE.toggle(4);
 }
