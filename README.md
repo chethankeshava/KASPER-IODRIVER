@@ -1,3 +1,7 @@
+
+*********************************************************
+** Initial commits 
+*********************************************************
 This is a sample project
 bharat added this
 This change via branch. (Branch Name: branch_bharat)
@@ -17,3 +21,37 @@ This is secong changes-rimjhim_dev_branch
 
 This change via branch. (branch Name:prashant_dev)
 
+
+*****************************************
+READme section for bluetooth application
+*****************************************
+// Screen-1 description
+-> There are two screens in the bluetooth application.
+-> First screen has "TURN ON" and "TURN OFF" buttons that will turn on/off the bluetooth for android phone. 
+-> "Find Devices" button is used to find available bluetooth devices and list them under the "Available Devices" head    ing. The items in the list are clickable.
+-> "List Devices" button is used to get information about already paired devices.
+-> "Get Visible" button is used to make the android phone visible to other bluetooth devices.
+
+
+// Screen-2 description
+-> When an item in the "Available Devices" list is clicked, application moves to the second screen.
+-> This screen has three buttons initially: START CAR, SEND, STOP CAR
+->
+
+*****************************************
+Readme section for GPS module
+*****************************************
+
+*****************************************
+Readme section for Bridge controller
+*****************************************
+
+
+
+
+
+
+
+*****************************************
+Readme section for master controller
+*****************************************
