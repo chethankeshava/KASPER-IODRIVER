@@ -25,7 +25,18 @@ This change via branch. (branch Name:prashant_dev)
 *****************************************
 READme section for bluetooth application
 *****************************************
-// Screen-1 description
+// Running the android application on android device.
+-> Go to android_source_code folder.
+-> Then go to CMPE243 folder.
+-> Then Kasper-master-2.
+-> Then go to app folder.
+-> Then build folder.
+-> Then Outputs.
+-> Then apk folder and inside that there will be an app-debug.apk file
+-> Download that file in your android device.
+-> Install it and run.
+
+// SCREEN-1 description
 -> There are two screens in the bluetooth application.
 -> First screen has "TURN ON" and "TURN OFF" buttons that will turn on/off the bluetooth for android phone. 
 -> "Find Devices" button is used to find available bluetooth devices and list them under the "Available Devices" head    ing. The items in the list are clickable.
@@ -33,7 +44,7 @@ READme section for bluetooth application
 -> "Get Visible" button is used to make the android phone visible to other bluetooth devices.
 
 
-// Screen-2 description
+// SCREEN-2 description
 -> When an item in the "Available Devices" list is clicked, application moves to the second screen.
 -> This screen has three buttons initially: START CAR, SEND, STOP CAR
 -> START CAR button: This button will send signal to start the car.
