@@ -36,7 +36,9 @@ READme section for bluetooth application
 // Screen-2 description
 -> When an item in the "Available Devices" list is clicked, application moves to the second screen.
 -> This screen has three buttons initially: START CAR, SEND, STOP CAR
-->
+-> START CAR button: This button will send signal to start the car.
+-> STOP CAR button : This button will send signal to stop the car.
+-> SEND button     : This button is initially added to debug communication functionality between android phone and the   bluetooth module.
 
 *****************************************
 Readme section for GPS module
