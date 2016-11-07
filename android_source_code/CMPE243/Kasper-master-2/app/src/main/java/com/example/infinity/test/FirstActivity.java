@@ -1,3 +1,5 @@
+// This is the screen-1 that appears when the application is opened.
+
 package com.example.infinity.test;
 
 import android.Manifest;
@@ -103,7 +105,7 @@ import android.os.ParcelUuid;
 public class FirstActivity extends ListActivity {
 
     private static final int REQUEST_COARSE_LOCATION = 900 ;
-    private Button b1, b2, b3, b4;
+    private Button b1, b2, b3, b4;                             //Buttons on the first screen
     private BluetoothAdapter BA;
     private Set<BluetoothDevice> pairedDevices;
     //private ConnectThread connectThread;
@@ -111,10 +113,9 @@ public class FirstActivity extends ListActivity {
     ListView lv;
     ListView lv2;
 
-    ArrayList al = new ArrayList();
+    ArrayList al = new ArrayList();                           // Array list for storing the list of devices.
 
-    //————————————————————————————
-    BluetoothServerSocket mmServerSocket;
+    BluetoothServerSocket mmServerSocket;                     // Socket used for connection.
 
     ArrayList<BluetoothDevice> list = new ArrayList();
     ArrayList list1 = new ArrayList();
@@ -125,9 +126,9 @@ public class FirstActivity extends ListActivity {
 
     private String name;
 
-    private UUID my_uuid;
-
-    //————————————————————————————
+    private UUID my_uuid;                                     // UUID stands for universally unique identifier. It is a 128 bit number.
+                                                              // for Bluetooth communication there is a fixed UUID. It usually represents some
+                                                              // common service protocols that bluetooth device supports.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,15 +142,12 @@ public class FirstActivity extends ListActivity {
 
         BA = BluetoothAdapter.getDefaultAdapter();
         lv = (ListView) findViewById(R.id.list_view_id);
-        //lv2 = (ListView) findViewById(R.id.list);
+
         lv2 = getListView();
 
         adapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_list_item_1, list1);
-        // New code for communication
+
         setListAdapter(adapter);
-
-
-
 
         lv2.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -159,26 +157,24 @@ public class FirstActivity extends ListActivity {
                 Intent in = new Intent(FirstActivity.this,MainActivity.class);
                 in.putExtra("device", bluetoothList.get(position));
                 startActivity(in);
-                //connectThread = new ConnectThread(bluetoothList.get(position));
             }
         });
-        //lv2.setAdapter(adapter);
     }
 
-
+    // The Below function is called when the TURN ON button is pressed.
     public void Turn_ON_button(View view) {
 
         if (!BA.isEnabled()) {
             Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(turnOn, 0);
-            Toast.makeText(getApplicationContext(), "Turned On", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Turned On", Toast.LENGTH_LONG).show();  // Toast method is used to display the text on screen for short/long duration to the user.
         } else {
             Toast.makeText(getApplicationContext(), "Already On", Toast.LENGTH_LONG).show();
         }
 
     }
 
-
+    // The Below function is called when the TURN OFF button is pressed.
     public void Turn_OFF_button(View view) {
 
         BA.disable();
@@ -186,24 +182,21 @@ public class FirstActivity extends ListActivity {
 
     }
 
-
+    // The Below function is called when the GET VISIBLE button is pressed.
     public void Get_Visible_button(View view) {
 
         Intent getVisible = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         startActivityForResult(getVisible, 0);
-
     }
 
     // The “List_Devices_button” method will query about the set of paired devices to see if the device is already known.
-
+    // The Below function is called when the LIST DEVICES button is pressed.
 
     public void List_Devices_button(View view) {
 
-
         pairedDevices = BA.getBondedDevices(); // This is to see if the desired device is already known (This information comes from the API, that has the value stored in it)
 
-        for (BluetoothDevice bt : pairedDevices)
-        {
+        for (BluetoothDevice bt : pairedDevices) {
             list.add(bt);
             al.add(bt.getName());
         }
@@ -217,12 +210,14 @@ public class FirstActivity extends ListActivity {
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent in = new Intent(FirstActivity.this,MainActivity.class);
+                Intent in = new Intent(FirstActivity.this, MainActivity.class);
                 in.putExtra("device", list.get(i));
                 startActivity(in);
             }
         });
 
+    }
+        // Below code shows how you can listen for a click on the button.
         /*
         b4.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -231,10 +226,9 @@ public class FirstActivity extends ListActivity {
             }
         });
         */
-    }
 
-    // “The Find_Device_button” method will start the discovery of new devices.
-
+    // “The Find_Device_button” method will start the discovery of new available devices.
+    // The Below function is called when the LIST DEVICES button is pressed.
 
     public void Find_Device_button(View view) {
 
@@ -246,10 +240,7 @@ public class FirstActivity extends ListActivity {
 
         registerReceiver(mReceiver, filter);
         BA.startDiscovery();
-
-
     }
-
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -305,6 +296,7 @@ public class FirstActivity extends ListActivity {
         }
     };
 
+    // Below method is used to pair with the available devices.
     private void pairDevice(BluetoothDevice device) {
         try {
             Method method = device.getClass().getMethod("createBond", (Class[]) null);
@@ -314,10 +306,13 @@ public class FirstActivity extends ListActivity {
         }
     }
 
+    // Below showToast method is used to display messages on screen for the user.
     private void showToast(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
+
+    // The below method is called for final clean up before the activity is destroyed.
     @Override
     public void onDestroy() {
         unregisterReceiver(mReceiver);
@@ -351,7 +346,4 @@ public class FirstActivity extends ListActivity {
             }
         }
     }
-
-
 }
-

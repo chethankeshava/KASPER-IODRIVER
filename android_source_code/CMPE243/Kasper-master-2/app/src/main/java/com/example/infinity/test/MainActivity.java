@@ -1,3 +1,7 @@
+// This is the second screen that will appear as soon as an available device is clicked
+// With this screen you can send the START_CAR and STOP_CAR signal to the bluetooth module along
+// with a string of data.
+
 package com.example.infinity.test;
 
 import java.io.IOException;
@@ -27,9 +31,9 @@ public class MainActivity extends Activity {
 
     TextView result;
     private String address;
-    Handler h;
+    Handler h;                                                  // Handler used for receiving messages
 
-    final int RECIEVE_MESSAGE = 1;        // Status  for Handler
+    final int RECIEVE_MESSAGE = 1;                              // Status  for Handler
     private BluetoothAdapter btAdapter = null;
     private BluetoothSocket btSocket = null;
     private StringBuilder sb = new StringBuilder();
@@ -37,13 +41,18 @@ public class MainActivity extends Activity {
     private ConnectedThread mConnectedThread;
     private BluetoothDevice deviceName;
 
-    // SPP UUID service
+    // SPP UUID service- Serial port UUID
+    // Below UUID string is used for communication between android device and any other device (other than android).
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+    // This UUID is used if two android devices communicate with each other over bluetooth
     //private static final UUID MY_UUID = UUID.fromString("FA87C0D0-AFAC-11DE-8A39-0800200C9A66");
 
     // MAC-address of Bluetooth module (you must edit this line)
     //private static String address = "B4:3A:28:D2:E6:8A";
     //private static String address = "C0:CE:CD:EA:B9:0E";
+
+    // This application automatically takes the MAC ID of the bluetooth device so no need to edit above two lines.
 
     /** Called when the activity is first created. */
     @Override
@@ -85,7 +94,6 @@ public class MainActivity extends Activity {
         btAdapter = BluetoothAdapter.getDefaultAdapter();       // get Bluetooth adapter
         checkBTState();
 
-
         Button bt = (Button) findViewById(R.id.send);
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,6 +105,7 @@ public class MainActivity extends Activity {
 
 
         // Code added for Start button functionality
+        // Button b1 is referenced to the START_CAR button
 
         Button bt1 = (Button) findViewById(R.id.start_button);
         bt1.setOnClickListener(new View.OnClickListener(){
@@ -108,7 +117,7 @@ public class MainActivity extends Activity {
         });
 
         // Code added for Stop button functionality.
-
+        // Button b2 is referenced to the START_CAR button
         Button bt2 = (Button) findViewById(R.id.stop_button);
         bt2.setOnClickListener(new View.OnClickListener(){
             @Override
