@@ -78,6 +78,11 @@ bool period_init(void)
 
 	while(!receivedAck)
 	{
+		if(CAN_is_bus_off(GPS_CAN_BUS))
+		{
+			CAN_reset_bus(GPS_CAN_BUS);
+		}
+
 		geoSendHeartBeat();
 
 		if (CAN_rx(can1, &can_msg, 0))
@@ -88,6 +93,8 @@ bool period_init(void)
 				receivedAck = true;
 
 			}
+
+
 		}
 	}
 
