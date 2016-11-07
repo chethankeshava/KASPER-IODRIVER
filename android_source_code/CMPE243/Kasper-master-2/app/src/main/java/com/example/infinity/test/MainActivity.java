@@ -111,18 +111,18 @@ public class MainActivity extends Activity {
         bt1.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                mConnectedThread.write("1");
+                mConnectedThread.write("1\n");
             }
 
         });
 
         // Code added for Stop button functionality.
-        // Button b2 is referenced to the START_CAR button
+        // Button b2 is referenced to the STOP_CAR button
         Button bt2 = (Button) findViewById(R.id.stop_button);
         bt2.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                mConnectedThread.write("0");
+                mConnectedThread.write("01\n");
             }
 
         });
