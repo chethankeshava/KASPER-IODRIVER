@@ -35,7 +35,13 @@
 #include "compass.hpp"
 #include "printf_lib.h"
 #include "can.h"
+#include "../_can_dbc/generated_can.h"
 
+#define 	GPS_CAN_RX_QUEUE_SIZE			16
+#define 	GPS_CAN_TX_QUEUE_SIZE			16
+
+
+bool receivedAck = false;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -50,11 +56,48 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+	can_msg_t can_msg={0};
+
 	if(!(compassi2c.init()))
 	{
 		u0_dbg_printf("Device not present\n");
 		return false;
 	}
+
+	if(CAN_init(GPS_CAN_BUS, 100, GPS_CAN_RX_QUEUE_SIZE, GPS_CAN_TX_QUEUE_SIZE, NULL, NULL))
+	{
+		u0_dbg_printf("Initialize CAN module\n");
+	}
+	else
+	{
+		u0_dbg_printf("unable to initialize CAN module\n");
+	}
+
+	CAN_reset_bus(GPS_CAN_BUS);
+	CAN_bypass_filter_accept_all_msgs();
+
+	while(!receivedAck)
+	{
+		if(CAN_is_bus_off(GPS_CAN_BUS))
+		{
+			CAN_reset_bus(GPS_CAN_BUS);
+		}
+
+		geoSendHeartBeat();
+
+		if (CAN_rx(can1, &can_msg, 0))
+		{
+			if(can_msg.msg_id == POWER_SYNC_ACK_HDR.mid)
+			{
+				u0_dbg_printf("Received ACK from master\n");
+				receivedAck = true;
+
+			}
+
+
+		}
+	}
+
 
 	return true; // Must return true upon success
 }
