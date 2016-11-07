@@ -17,8 +17,7 @@
 #define 	PMTK_SET_NMEA_OUTPUT_RMCONLY 	"$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n"
 #define 	PMTK_SET_NMEA_OUTPUT_100 		"$PMTK220,100*2F\r\n"
 #define 	GPS_BAUD_RATE 					9600			///	100Kbps baud rate
-#define 	GPS_CAN_RX_QUEUE_SIZE			16
-#define 	GPS_CAN_TX_QUEUE_SIZE			16
+
 
 
 char gpsData[GPS_DATA_LEN];
@@ -125,15 +124,7 @@ bool parseGpsData(char *buffer)
 **************************************************************************************************/
 void gpsInit()
 {
-	if(CAN_init(GPS_CAN_BUS, 100, GPS_CAN_RX_QUEUE_SIZE, GPS_CAN_TX_QUEUE_SIZE, canBusOffCallback, NULL))
-	{
-		u0_dbg_printf("Initialize CAN module\n");
-	}
-	else
-	{
-		u0_dbg_printf("unable to initialize CAN module\n");
-	}
-	CAN_reset_bus(GPS_CAN_BUS);
+
 }
 
 /**************************************************************************************************
