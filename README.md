@@ -49,11 +49,16 @@ Readme section for Bridge controller
 *****************************************
 
 
-
-
-
-
+*****************************************
+Readme section for Master controller
+*****************************************
 
 *****************************************
-Readme section for master controller
+Readme section for Sensor controller
 *****************************************
+
+*****************************************
+Readme section for Motor/IO controller
+*****************************************
+
+
