@@ -9,9 +9,12 @@
 #include "can.h"
 #include "string.h"
 #include "printf_lib.h"
+#include "stdio.h"
+
 
 
 can_msg_t can_msg2;
+
 //const uint32_t            RESET__MIA_MS = 3;
 //
 //const RESET_t      RESET__MIA_MSG = { 4 };
@@ -20,9 +23,11 @@ can_msg_t can_msg2;
 
 
 MOTORIO_DIRECTION_t mDirection_cmd_msg = { 0 };
-const uint32_t            MOTORIO_DIRECTION__MIA_MS = 3;
+const uint32_t            MOTORIO_DIRECTION__MIA_MS = 300;
 
-const MOTORIO_DIRECTION_t      MOTORIO_DIRECTION__MIA_MSG = { 4 };
+const MOTORIO_DIRECTION_t      MOTORIO_DIRECTION__MIA_MSG = { 0 };
+
+
 
 
 #define H_LEFT                           9.0
@@ -37,6 +42,7 @@ const MOTORIO_DIRECTION_t      MOTORIO_DIRECTION__MIA_MSG = { 4 };
 #define DC_SUPER_FAST             		 5.5
 
 bool stop_flag = false;
+
 
 
 MotorController::MotorController(): driveMotor(PWM::pwm2,54), steerMotor(PWM::pwm1,54)
@@ -70,6 +76,10 @@ void drive_car(void)
 		can_msg_hdr.mid = can_msg2.msg_id;
 		//	printf("%d",can_msg2.msg_id);
 #if 0
+		//	printf("%d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
+		//printf("%d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
+		//	printf("%d",can_msg2.msg_id);
+		c++;
 		switch(can_msg2.msg_id)
 		{
 		case 110:
@@ -130,115 +140,155 @@ void drive_car(void)
 			{
 				MotorControl.setServo(H_RIGHT);
 				delay_ms(10);
-			}
-			break;
+				=======
+						//	printf("s--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
+						//	printf("d--> %d\n ",mDirection_cmd_msg.MOTORIO_DIRECTION_direction);
+						printf("t--> %d\n ",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
 
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed==NORMAL)
+				{
+					dc_accelerate();
+				}
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed==STOP)
+				{
+					dc_stop();
+				}
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_LEFT)
+				{
+					MotorControl.setServo(S_LEFT);
+					// 	delay_ms(10);
+				}
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==HARD_LEFT)
+				{
+					MotorControl.setServo(H_LEFT);
+					//	delay_ms(10);
+				}
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==STRAIGHT)
+				{
+					MotorControl.setServo(STRAIGHT_STEER);
+					//	delay_ms(10);
+				}
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_RIGHT)
+				{
+					MotorControl.setServo(S_RIGHT);
+					//	delay_ms(10);
+				}
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==HARD_RIGHT)
+				{
+					MotorControl.setServo(H_RIGHT);
+					//	delay_ms(10);
+				}
+
+				break;
 		default:
 			//printf("MID not defined");
 			break;
 
-		}
+			}
 #endif
 
 #if 1
-		if(can_msg2.msg_id== RESET_HDR.mid)
-		{
-			//	dbc_decode_RESET(&reset_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
-			LE.off(1);
-		}
+			if(can_msg2.msg_id== RESET_HDR.mid)
+			{
+				//	dbc_decode_RESET(&reset_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
+				LE.off(1);
+			}
+	//		printf("mid--> %d\n ",can_msg2.msg_id);
 
-		if(can_msg2.msg_id == MOTORIO_DIRECTION_HDR.mid)
-		{
-			LD.setNumber(99);
-			dbc_decode_MOTORIO_DIRECTION(&mDirection_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
-			//if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed!=0)
-			//	printf("s--> %d \n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
-			//	printf("d--> %d\n ",mDirection_cmd_msg.MOTORIO_DIRECTION_direction);
+			if(can_msg2.msg_id == MOTORIO_DIRECTION_HDR.mid)
+			{
+				LD.setNumber(00);
+				dbc_decode_MOTORIO_DIRECTION(&mDirection_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
+				//if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed!=0)
+				//	printf("s--> %d \n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
+			//		printf("t--> %d \n",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
 
-			printf("t--> %d\n ",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
-			//	u0_dbg_printf("Speed is %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
+				printf("t--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
+					printf("s--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
 
-			if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == SLOW)
-			{
-				dc_accelerate(DC_SLOW);
-			}
-			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == NORMAL)
-			{
-				dc_accelerate(DC_NORMAL);
-			}
-			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == STOP)
-			{
-				dc_stop();
-				//	printf("stop\n ");
-			}
-			//			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == FAST)
-			//			{
-			//				//dc_stop();
-			//				dc_accelerate(DC_SUPER_FAST);
-			//			}
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == SLOW)
+				{
+					dc_accelerate(DC_SLOW);
+				}
+				else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == NORMAL)
+				{
+					dc_accelerate(DC_NORMAL);
+				}
+				else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == STOP)
+				{
+					dc_stop();
+				}
+				//			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == FAST)
+				//			{
+				//				//dc_stop();
+				//				dc_accelerate(DC_SUPER_FAST);
+				//			}
 
-			if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_LEFT)
-			{
-				MotorControl.setServo(S_LEFT);
-				delay_ms(10);
+				if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_LEFT)
+				{
+					MotorControl.setServo(S_LEFT);
+					delay_ms(10);
+				}
+				else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==HARD_LEFT)
+				{
+					MotorControl.setServo(H_LEFT);
+					delay_ms(10);
+				}
+				else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==STRAIGHT)
+				{
+					MotorControl.setServo(STRAIGHT_STEER);
+					delay_ms(10);
+				}
+				else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_RIGHT)
+				{
+					MotorControl.setServo(S_RIGHT);
+					delay_ms(10);
+				}
+				else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==HARD_RIGHT)
+				{
+					MotorControl.setServo(H_RIGHT);
+					delay_ms(10);
+				}
 			}
-			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==HARD_LEFT)
-			{
-				MotorControl.setServo(H_LEFT);
-				delay_ms(10);
-			}
-			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==STRAIGHT)
-			{
-				MotorControl.setServo(STRAIGHT_STEER);
-				delay_ms(10);
-			}
-			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_RIGHT)
-			{
-				MotorControl.setServo(S_RIGHT);
-				delay_ms(10);
-			}
-			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==HARD_RIGHT)
-			{
-				MotorControl.setServo(H_RIGHT);
-				delay_ms(10);
-			}
-		}
 #endif
+		}
 	}
-}
 
 
-void servo_left(void)
-{
-	MotorControl.setServo(HARD_LEFT);
-
-}
-
-
-
-void dc_accelerate(float pwmValue)
-{
-	//printf(" acc ");
-	//delay_ms(10);
-
-	MotorControl.setDC(pwmValue);
-
-	//	MotorControl.setDC(6.6);
-	stop_flag = true;
-
-}
-void dc_stop(void)
-{
-	//	printf(" dcstop ");
-	if(stop_flag)
+	void handle_motor_mia(void)
 	{
-		MotorControl.setDC(DC_STOP);
-		stop_flag = false;
+		//			if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
+		//
+		//				{
+		//					LE.on(1);
+		//					reset_cmd_msg.RESET_data=RESET__MIA_MSG.RESET_data;
+		//
+		//					LE.on(1);
+		//
+		//				}
+		if(dbc_handle_mia_MOTORIO_DIRECTION(&mDirection_cmd_msg, 1))
+		{
+			LE.on(1);
+			mDirection_cmd_msg.MOTORIO_DIRECTION_direction=MOTORIO_DIRECTION__MIA_MSG.MOTORIO_DIRECTION_direction;
+			LD.setNumber(41);
+		}
 	}
-	//	delay_ms(10);
 
-	//delay_ms(15);
-}
+	void dc_accelerate(float pwmValue)
+	{
+		MotorControl.setDC(pwmValue);
+		stop_flag = true;
+	}
+
+	void dc_stop(void)
+	{
+		if(stop_flag)
+		{
+			MotorControl.setDC(DC_STOP);
+			stop_flag = false;
+		}
+	}
+
 
 
 

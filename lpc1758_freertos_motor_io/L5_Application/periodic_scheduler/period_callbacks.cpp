@@ -39,15 +39,11 @@
 #include "lpc_pwm.hpp"
 
 
+#define FW                           6.4
+#define DC_STOP                      7.0
 
+int pwm_input = 6.4;
 
-//PWM steerControl(PWM::pwm1);
-
-//PWM servo1(PWM::pwm1, 50);
-//PWM servo2(PWM::pwm2, 0);
-
-// servo1.set(5.0);  ///< Set to left position
-//  servo2.set(10.0); ///< Set to right position
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -61,9 +57,7 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 
 
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
-
 {
-
 	can_msg_t can_msg = { 0 };
 	can_msg.msg_id= mid;
 	can_msg.frame_fields.data_len = dlc;
@@ -76,6 +70,15 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+	int c=0;
+	while(c < 20)
+	{
+		MotorControl.setDC(DC_STOP);
+		delay_ms(50);
+		c++;
+	}
+
+	delay_ms(20);
 	CAN_init(can1, 100, 5, 5, 0, 0);
 	CAN_reset_bus(can1);
 
@@ -83,7 +86,7 @@ bool period_init(void)
 	CAN_bypass_filter_accept_all_msgs();
 
 	CAN_reset_bus(can1);
-//	printf("can bus initialized\n");
+	//	printf("can bus initialized\n");
 	return true; // Must return true upon success
 }
 
@@ -102,20 +105,46 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
+
 	if(CAN_is_bus_off(can1))
 	{
 		puts(" Bus OFF ");
 		CAN_reset_bus(can1);
 	}
 
-//	MOTORIO_HEARTBEAT_t motorio_heartbeat={0};
+	//	if(SW.getSwitch(1))
+	//	{
+	//	//	if(count%2)
+	//		//{
+	//			dc_accelerate(pwm_input);
+	//		//	printf("%d\n",pwm_input);
+	//			//if(pwm_input>5.7)
+	//				//pwm_input-=0.1;
+	//		//}
+	//
+	//	}
+	//	else if(SW.getSwitch(2))
+	//		{
+	//		dc_stop();
+	//		}
+	//	MOTORIO_HEARTBEAT_t motorio_heartbeat={0};
 	//motorio_heartbeat.MOTORIO_HEARTBEAT_data=1;
-//	dbc_encode_and_send_MOTORIO_HEARTBEAT(&motorio_heartbeat);
+	//	dbc_encode_and_send_MOTORIO_HEARTBEAT(&motorio_heartbeat);
 }
 
 void period_10Hz(uint32_t count)
 {
-	drive_car();
+	//drive_car();
+
+	if(SW.getSwitch(1))
+	{
+		dc_accelerate(6.4);
+	}
+	else if(SW.getSwitch(2))
+	{
+		dc_stop();
+	}
+
 
 	//	if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
 	//

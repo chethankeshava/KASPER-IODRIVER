@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_first"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000"
+    tools:context="com.example.infinity.test.FirstActivity">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/kasper_heading1_id"
+        android:text="@string/kasper_heading"
+        android:textSize="25sp"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/kasper_heading2_id"
+        android:text="@string/bluetooth_heading"
+        android:textSize="18sp"
+        android:layout_below="@+id/kasper_heading1_id"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button1"
+        android:text="@string/turn_on"
+        android:textSize="20sp"
+        android:textAllCaps="false"
+        android:layout_below="@+id/kasper_heading2_id"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:onClick="Turn_ON_button" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button2"
+        android:text="@string/turn_off"
+        android:textSize="20sp"
+        android:textAllCaps="false"
+        android:layout_alignParentRight="true"
+        android:layout_alignBaseline="@+id/button1"
+        android:onClick="Turn_OFF_button"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button3"
+        android:text="@string/get_visible"
+        android:textSize="20sp"
+        android:textAllCaps="false"
+        android:layout_alignBaseline="@+id/button1"
+        android:layout_centerHorizontal="true"
+        android:onClick="Get_Visible_button"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button4"
+        android:text="@string/list_devices"
+        android:textSize="20sp"
+        android:textAllCaps="false"
+        android:onClick="List_Devices_button"
+        android:layout_marginTop="31dp"
+        android:layout_below="@+id/button1"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button5"
+        android:text="@string/find_devices"
+        android:textSize="20sp"
+        android:textAllCaps="false"
+        android:layout_alignBaseline="@id/button4"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_alignRight="@+id/button2"
+        android:layout_alignEnd="@+id/button2"
+        android:onClick="Find_Device_button"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/kasper_heading3_id"
+        android:text="@string/paired_devices"
+        android:textColor="@color/colorAccent"
+        android:textSize="22sp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/button4"/>
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:id="@+id/list_view_id"
+        android:layout_below="@+id/kasper_heading3_id">
+    </ListView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/kasper_heading4_id"
+        android:text="@string/available_devices"
+        android:textColor="@color/colorAccent"
+        android:textSize="22sp"
+        android:layout_below="@+id/list_view_id"/>
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@android:id/list"
+        android:layout_below="@+id/kasper_heading4_id">
+    </ListView>
+
+
+</RelativeLayout>
