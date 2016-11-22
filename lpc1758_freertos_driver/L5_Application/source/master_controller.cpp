@@ -96,12 +96,26 @@ status_t send_power_sync_ack(void)
  * @params: void
  * Return type: status_t (bool)
  */
+
+/**
+ * todo: While a heartbeat is a good idea you may not need to have every ECU send a
+ * separate distinct heartbeat message. Since they already send data at a certain
+ * frequency you can use those to determine MIA. Only the master controller truly needs
+ * a dedicated heartbeat message since it does not regularly communicate with the other ECUs.
+ */
 status_t read_controller_heartbeat(void)
 {
 	status_t status = false, miastatus = false;
 	status_t status_sensor = false, status_motorio = false, status_bridge = false, status_geo = false;
 	can_msg_t can_msg;
 
+	/**
+	 * todo: NEVER use while loops in RTOS systems. You have no idea how long you will be in this
+	 * 			loop. What if you get flooded with messages? This may work with only 5 ECUs on the bus
+	 * 			and with a limited number of message IDs that you are listening for, but not in a bigger
+	 * 			system. If you need to process received messages more quickly then move this to a faster
+	 * 			rate task.
+	 */
 	while (CAN_rx(can1, &can_msg, 0))
 	{
 		// Form the message header from the metadata of the arriving message
@@ -214,6 +228,12 @@ SENSOR_SONIC_t receive_sensor_data(void)
 #endif
 		}
 	}
+	/**
+	 * todo: try to avoid magic numbers. You use 100ms here because you know that this task is
+	 * 			going to run in the 10Hz task, but what happens if it gets moved in the future.
+	 * 			If someone new is maintaining the code they may miss this. Use something like
+	 * 			"10HZ_MS"
+	 */
 	miastatus = dbc_handle_mia_SENSOR_SONIC(&can_msg_sensor_data, 100);
 	if(miastatus == true)
 	{
@@ -246,6 +266,9 @@ status_t avoid_obstacle_and_drive(void)
 	uint16_t sensor_center = sensor_data.SENSORS_SONIC_front_center;
 	uint16_t sensor_right = sensor_data.SENSORS_SONIC_front_right;
 
+	/**
+	 * todo: don't forget you will need to be able to back up to navigate around large obstacles
+	 */
 	if((sensor_left <= 60) && (sensor_center <= 60) && (sensor_right <= 60))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
@@ -293,6 +316,9 @@ status_t cmd_from_app(void)
 {
 	status_t status = false;
 	can_msg_t can_msg;
+	/**
+	 * todo: NO while loops.
+	 */
 	while (CAN_rx(can1, &can_msg, 0))
 	{
 		if(can_msg.msg_id == START_CMD_APP_HDR.mid)

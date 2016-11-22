@@ -41,6 +41,9 @@ const MOTORIO_DIRECTION_t      MOTORIO_DIRECTION__MIA_MSG = { 0 };
 #define DC_NORMAL                   	 6.2
 #define DC_SUPER_FAST             		 5.5
 
+/**
+ * todo: avoid using globals. You can use semaphores or make this interrupt based.
+ */
 bool stop_flag = false;
 
 
@@ -68,7 +71,9 @@ void drive_car(void)
 	//MotorControl.setDC(6.5);
 
 	//	MotorControl.setDC(DC_SUPER_SLOW);
-
+	/**
+	 * todo: do not use a while loop. use periodic tasks to receive and parse messages.
+	 */
 	while (CAN_rx(can1, &can_msg2, 0))
 	{
 		dbc_msg_hdr_t can_msg_hdr;
@@ -227,6 +232,9 @@ void drive_car(void)
 				if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_LEFT)
 				{
 					MotorControl.setServo(S_LEFT);
+					/**
+					 * todo: do NOT use delays if you are putting this in the periodic scheduler.
+					 */
 					delay_ms(10);
 				}
 				else if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==HARD_LEFT)
@@ -253,7 +261,9 @@ void drive_car(void)
 #endif
 		}
 	}
-
+/**
+ * todo: clean up these braces. They don't line up correctly and make your code confusing.
+ */
 
 	void handle_motor_mia(void)
 	{

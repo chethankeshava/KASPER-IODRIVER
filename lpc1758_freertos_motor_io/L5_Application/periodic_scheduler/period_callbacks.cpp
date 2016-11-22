@@ -42,6 +42,9 @@
 #define FW                           6.4
 #define DC_STOP                      7.0
 
+/**
+ * todo: avoid global variables.
+ */
 int pwm_input = 6.4;
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -138,7 +141,7 @@ void period_10Hz(uint32_t count)
 
 	if(SW.getSwitch(1))
 	{
-		dc_accelerate(6.4);
+		dc_accelerate(6.4); // todo: avoid magic numbers. You already defined this constant above.
 	}
 	else if(SW.getSwitch(2))
 	{

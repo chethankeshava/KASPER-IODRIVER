@@ -8,6 +8,12 @@
 #include "sensor.hpp"
 #include "string.h"
 
+/**
+ * todo: try not to use global variables.
+ * 		 Use unsigned numbers here. You don't want some number rollover incident to cause
+ * 		 you to crash.
+ */
+
 int Trigger_left, Trigger_center, Trigger_right;
 //Trigger_back;
 int Distance_left, Distance_center, Distance_right;
@@ -22,6 +28,9 @@ SENSOR_SONIC_t sensor_msg={0};
 
 void Sensor(){
 	Sensor_left();
+	/**
+	 * todo: If you are going to use delays here ensure that you do not run over in time.
+	 */
 	delay_ms(15);
 	Sensor_center();
 	delay_ms(15);
@@ -56,6 +65,9 @@ void Transmit(void)
 
 void Calculate_Distance_left(void)
 {
+	/**
+	 * todo: avoid using magic numbers like 147.
+	 */
 	Distance_left = ((sys_get_uptime_us() - Trigger_left)/147) ; //each 147uS is 1 inch (Datasheet)
 	sensor_msg.SENSORS_SONIC_front_left=Distance_left;
 }
@@ -81,6 +93,9 @@ void Calculate_Distance_right(void)
 void Sensor_left(void)
 {
 	LeftRX.setHigh(); // enable Ranging   (enable left sonar)
+	/**
+	 * todo: magic number - 21
+	 */
 	delay_us(21); //hold high  >20uS to enable ranging
 	Trigger_left = sys_get_uptime_us(); //get timer at the moment ranging starts
 	LeftRX.setLow(); // disable ranging of left sonar
