@@ -10,7 +10,7 @@
 #include "string.h"
 #include "printf_lib.h"
 #include "stdio.h"
-
+#include "adc0.h"
 
 
 can_msg_t can_msg2;
@@ -198,7 +198,7 @@ void drive_car(void)
 				//	dbc_decode_RESET(&reset_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
 				LE.off(1);
 			}
-	//		printf("mid--> %d\n ",can_msg2.msg_id);
+			//		printf("mid--> %d\n ",can_msg2.msg_id);
 
 			if(can_msg2.msg_id == MOTORIO_DIRECTION_HDR.mid)
 			{
@@ -206,10 +206,10 @@ void drive_car(void)
 				dbc_decode_MOTORIO_DIRECTION(&mDirection_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
 				//if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed!=0)
 				//	printf("s--> %d \n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
-			//		printf("t--> %d \n",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
+				//		printf("t--> %d \n",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
 
 				printf("t--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
-					printf("s--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
+				printf("s--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
 
 				if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == SLOW)
 				{
@@ -299,6 +299,29 @@ void drive_car(void)
 		}
 	}
 
+	void rpm_sensor(void)
+	{
+		int reading = 0;
+
+		// Initialization :
+		LPC_PINCON->PINSEL3 |=  (3 << 28); // ADC-4 is on P1.30, select this as ADC0.4
+
+		reading = adc0_get_reading(4); // Read current value of ADC-4
+		printf(" %d ", reading);
+		// delay_ms(100);
+	}
 
 
+	void dcmotor_init(void)
+	{
+		uint8_t boot=0;
+			while(boot < 15)//made it 15 from 20
+			{
+				MotorControl.setDC(DC_STOP);
+				delay_ms(50);
+				boot++;
+			}
+
+			delay_ms(20);
+	}
 

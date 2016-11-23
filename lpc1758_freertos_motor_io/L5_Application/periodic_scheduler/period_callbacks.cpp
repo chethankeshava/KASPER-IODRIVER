@@ -73,15 +73,7 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	int c=0;
-	while(c < 20)
-	{
-		MotorControl.setDC(DC_STOP);
-		delay_ms(50);
-		c++;
-	}
-
-	delay_ms(20);
+	dcmotor_init();
 	CAN_init(can1, 100, 5, 5, 0, 0);
 	CAN_reset_bus(can1);
 
@@ -96,6 +88,7 @@ bool period_init(void)
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
+
 	// Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
 	return true; // Must return true upon success
 }
@@ -108,6 +101,9 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
+
+
+	rpm_sensor();
 
 	if(CAN_is_bus_off(can1))
 	{
@@ -137,17 +133,17 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-	//drive_car();
+	drive_car();
 
-	if(SW.getSwitch(1))
-	{
-		dc_accelerate(6.4); // todo: avoid magic numbers. You already defined this constant above.
-	}
-	else if(SW.getSwitch(2))
-	{
-		dc_stop();
-	}
-
+//	if(SW.getSwitch(1))
+//	{
+//		dc_accelerate(6.4);
+//	}
+//	else if(SW.getSwitch(2))
+//	{
+//		dc_stop();
+//	}
+//
 
 	//	if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
 	//
@@ -184,5 +180,7 @@ void period_100Hz(uint32_t count)
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
+	//rpm_sensor();
+
 	//LE.toggle(4);
 }
