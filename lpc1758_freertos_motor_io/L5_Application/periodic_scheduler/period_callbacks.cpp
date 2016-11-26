@@ -46,7 +46,7 @@
  * todo: avoid global variables.
  */
 int pwm_input = 6.4;
-
+int rpm;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -73,6 +73,7 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+	rpm = 0;
 	dcmotor_init();
 	CAN_init(can1, 100, 5, 5, 0, 0);
 	CAN_reset_bus(can1);
@@ -102,8 +103,8 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 
-
-	rpm_sensor();
+	printf("RPM = %d",rpm);
+	//rpm_sensor();
 
 	if(CAN_is_bus_off(can1))
 	{
@@ -134,6 +135,11 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
 	drive_car();
+	if(rpm_sensor())
+		rpm++;
+	if(count%60==0)
+		rpm = 0;
+
 
 //	if(SW.getSwitch(1))
 //	{

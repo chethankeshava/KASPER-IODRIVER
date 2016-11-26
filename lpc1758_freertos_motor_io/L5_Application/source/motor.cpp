@@ -299,16 +299,27 @@ void drive_car(void)
 		}
 	}
 
-	void rpm_sensor(void)
+	bool rpm_sensor(void)
 	{
-		int reading = 0;
+		static int reading = 0,last_reading = 1000;
 
 		// Initialization :
 		LPC_PINCON->PINSEL3 |=  (3 << 28); // ADC-4 is on P1.30, select this as ADC0.4
 
 		reading = adc0_get_reading(4); // Read current value of ADC-4
-		printf(" %d ", reading);
+		if((reading - last_reading)>150)
+		{
+			last_reading = reading;
+			return true;
+		}
+		else
+		{
+			//printf(" %d ", reading);
+			last_reading = reading;
+			return false;
+		}
 		// delay_ms(100);
+
 	}
 
 
@@ -324,4 +335,3 @@ void drive_car(void)
 
 			delay_ms(20);
 	}
-

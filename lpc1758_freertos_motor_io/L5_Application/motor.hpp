@@ -42,7 +42,7 @@ void dc_accelerate(float pwmValue);
 void dc_stop(void);
 void drive_car(void);
 void handle_motor_mia(void);
-void rpm_sensor(void);
+bool rpm_sensor(void);
 void dcmotor_init(void);
 
 #ifdef __cplusplus
