@@ -26,6 +26,8 @@ extern GPIO RightRX; // Right
 void Calculate_Distance_left(void);
 void Calculate_Distance_center(void);
 void Calculate_Distance_right(void);
+void echo3_low_callback();
+void echo3_high_callback();
 //void Calculate_Distance_back(void);
 
 void Sensor_left(void);
