@@ -125,8 +125,13 @@ bool period_init(void)
 
 	CAN_reset_bus(GPS_CAN_BUS);
 	CAN_bypass_filter_accept_all_msgs();
+
 #endif
 #if 0
+
+    /**
+     * todo: NO while loops in RTOS systems.
+     */
 	while(!receivedAck)
 	{
 		if(CAN_is_bus_off(GPS_CAN_BUS))
@@ -171,8 +176,17 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
     LE.toggle(1);
+<<<<<<< HEAD
     //compassi2c.getHeading();
 #if 0
+=======
+    /**
+     * todo: will running this at 1Hz be fast enough? If you are parsing GPS data at 10Hz
+     *          maybe you should consider running your heading calculations at the same rate.
+     */
+    compassi2c.getHeading();
+
+>>>>>>> 9044c597f7695dbaf1c1a2e80f51121744fb0387
 	if(CAN_is_bus_off(GPS_CAN_BUS))
 	{
 		CAN_reset_bus(GPS_CAN_BUS);

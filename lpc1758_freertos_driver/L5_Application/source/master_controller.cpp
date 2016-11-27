@@ -22,6 +22,10 @@ GEO_HEARTBEAT_t can_msg_geo_hb= {0};
 
 SENSOR_SONIC_t can_msg_sensor_data = {0};
 POWER_SYNC_ACK_t power_sync_ack = {0};
+STATE_CAR car_state = INITIAL_STATE;
+SENSOR_SONIC_t sensor_data = {0};
+checkpoints_data_t checkpoints_data ={0};
+COMPASS_DATA_t can_msg_compass ={0};
 
 const uint32_t                             MOTORIO_HEARTBEAT__MIA_MS= 3000;
 const MOTORIO_HEARTBEAT_t                  MOTORIO_HEARTBEAT__MIA_MSG={0};
@@ -33,7 +37,6 @@ const uint32_t                             GEO_HEARTBEAT__MIA_MS = 3000;
 const GEO_HEARTBEAT_t                      GEO_HEARTBEAT__MIA_MSG={0};
 const uint32_t                             SENSOR_SONIC__MIA_MS = 300;
 const SENSOR_SONIC_t                       SENSOR_SONIC__MIA_MSG={0};
-
 
 
 /* dbc_app_send_can_msg:
@@ -96,12 +99,26 @@ status_t send_power_sync_ack(void)
  * @params: void
  * Return type: status_t (bool)
  */
+
+/**
+ * todo: While a heartbeat is a good idea you may not need to have every ECU send a
+ * separate distinct heartbeat message. Since they already send data at a certain
+ * frequency you can use those to determine MIA. Only the master controller truly needs
+ * a dedicated heartbeat message since it does not regularly communicate with the other ECUs.
+ */
 status_t read_controller_heartbeat(void)
 {
 	status_t status = false, miastatus = false;
 	status_t status_sensor = false, status_motorio = false, status_bridge = false, status_geo = false;
 	can_msg_t can_msg;
 
+	/**
+	 * todo: NEVER use while loops in RTOS systems. You have no idea how long you will be in this
+	 * 			loop. What if you get flooded with messages? This may work with only 5 ECUs on the bus
+	 * 			and with a limited number of message IDs that you are listening for, but not in a bigger
+	 * 			system. If you need to process received messages more quickly then move this to a faster
+	 * 			rate task.
+	 */
 	while (CAN_rx(can1, &can_msg, 0))
 	{
 		// Form the message header from the metadata of the arriving message
@@ -214,6 +231,12 @@ SENSOR_SONIC_t receive_sensor_data(void)
 #endif
 		}
 	}
+	/**
+	 * todo: try to avoid magic numbers. You use 100ms here because you know that this task is
+	 * 			going to run in the 10Hz task, but what happens if it gets moved in the future.
+	 * 			If someone new is maintaining the code they may miss this. Use something like
+	 * 			"10HZ_MS"
+	 */
 	miastatus = dbc_handle_mia_SENSOR_SONIC(&can_msg_sensor_data, 100);
 	if(miastatus == true)
 	{
@@ -238,14 +261,17 @@ SENSOR_SONIC_t receive_sensor_data(void)
 status_t avoid_obstacle_and_drive(void)
 {
 	status_t status = true;
-	SENSOR_SONIC_t sensor_data = {0};
+	//SENSOR_SONIC_t sensor_data = {0};
 	MOTORIO_DIRECTION_t motor_cmd = {0};
 
-	sensor_data = receive_sensor_data();
+	//sensor_data = receive_sensor_data();
 	uint16_t sensor_left = sensor_data.SENSORS_SONIC_front_left;
 	uint16_t sensor_center = sensor_data.SENSORS_SONIC_front_center;
 	uint16_t sensor_right = sensor_data.SENSORS_SONIC_front_right;
 
+	/**
+	 * todo: don't forget you will need to be able to back up to navigate around large obstacles
+	 */
 	if((sensor_left <= 60) && (sensor_center <= 60) && (sensor_right <= 60))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
@@ -293,6 +319,9 @@ status_t cmd_from_app(void)
 {
 	status_t status = false;
 	can_msg_t can_msg;
+	/**
+	 * todo: NO while loops.
+	 */
 	while (CAN_rx(can1, &can_msg, 0))
 	{
 		if(can_msg.msg_id == START_CMD_APP_HDR.mid)
@@ -316,6 +345,129 @@ status_t cmd_from_app(void)
 	}
 
 	return status;
+}
+
+void drive_car()
+{
+	if(car_state == START_CAR)
+	{
+		/* Sensor data is populated in 100Hz ,get the sensor data and avoid obstacle*/
+		avoid_obstacle_and_drive();
+	}
+	else if(car_state == SEND_CHECKPOINTS)
+	{
+		/* Send the first Location Update to Geo Controller */
+		NEXT_CHECKPOINT_DATA_t geo_data = {0};
+		geo_data.NEXT_CHECKPOINT_DATA_latitude = checkpoints_data.latitide[checkpoints_data.geo_update_pos];
+		geo_data.NEXT_CHECKPOINT_DATA_longitude = checkpoints_data.longitude[checkpoints_data.geo_update_pos];
+		checkpoints_data.geo_update_pos++;
+		dbc_encode_and_send_NEXT_CHECKPOINT_DATA(&geo_data);
+		car_state = NAVIGATING;
+
+	}
+	else if(car_state == NAVIGATING)
+	{
+		/* Check the current location distance from next checkpoint*/
+
+		/* If reached the next checkpoint send the next checkpoint
+		 * car_state = SEND_CHECKPOINTS */
+
+		/* Check the reading of bearing from compass and send motor commands
+    	     can_msg_compass */
+
+
+	}
+	else if(car_state == STOP_CAR)
+	{
+		/* Stop the car */
+		MOTORIO_DIRECTION_t motor_cmd;
+		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
+	}
+}
+/* Receive Data from CAN Bus*/
+void receive_data_from_can(void)
+{
+	can_msg_t can_msg;
+	dbc_msg_hdr_t can_msg_hdr;
+
+	while(CAN_rx(can1, &can_msg, 0))
+	{
+		can_msg_hdr.dlc = can_msg.frame_fields.data_len;
+		can_msg_hdr.mid = can_msg.msg_id;
+		/* Command from App to start*/
+		if(can_msg.msg_id ==  START_CMD_APP_HDR.mid)
+		{
+			car_state = START_CAR;
+#ifdef DEBUG_PRINTF
+			printf("RX START CMD\n");
+#endif
+		}
+		else if(can_msg.msg_id == SENSOR_SONIC_HDR.mid)
+		{
+			dbc_decode_SENSOR_SONIC(&sensor_data, can_msg.data.bytes, &can_msg_hdr);
+#ifdef DEBUG_PRINTF
+			printf("RX SENSOR DATA\n");
+#endif
+		}
+		else if(can_msg.msg_id == BRIDGE_TOTAL_CHECKPOINT_HDR.mid)
+		{
+			BRIDGE_TOTAL_CHECKPOINT_t can_msg_bridge ={0};
+			dbc_decode_BRIDGE_TOTAL_CHECKPOINT(&can_msg_bridge,can_msg.data.bytes, &can_msg_hdr);
+			checkpoints_data.tot_points = can_msg_bridge.BRIDGE_TOTAL_CHECKPOINT_NUMBER;
+#ifdef DEBUG_PRINTF
+			printf("RX Bridge Checkpoints\n");
+#endif
+		}
+		else if(can_msg.msg_id == BLUETOOTH_DATA_HDR.mid)
+		{
+			/* Collect All the checkpoint Data */
+			BLUETOOTH_DATA_t can_msg_bridge = {0};
+			dbc_decode_BLUETOOTH_DATA(&can_msg_bridge,can_msg.data.bytes, &can_msg_hdr);
+			checkpoints_data.latitide[checkpoints_data.position] = can_msg_bridge.BLUETOOTH_DATA_LAT;
+			checkpoints_data.longitude[checkpoints_data.position] = can_msg_bridge.BLUETOOTH_DATA_LON;
+			checkpoints_data.position++;
+
+			if(checkpoints_data.position == checkpoints_data.tot_points)
+			{
+				car_state = SEND_CHECKPOINTS;
+#ifdef DEBUG_PRINTF
+printf("All Checkpoint Data Received\n");
+#endif
+			}
+
+#ifdef DEBUG_PRINTF
+			printf("RX Bridge Checkpoints\n");
+#endif
+		}
+		else if(can_msg.msg_id == COMPASS_DATA_HDR.mid)
+		{
+			dbc_decode_COMPASS_DATA(&can_msg_compass,can_msg.data.bytes, &can_msg_hdr);
+#ifdef DEBUG_PRINTF
+			printf("RX COMPASS DATA\n");
+#endif
+		}
+		else if(can_msg.msg_id == GPS_LOCATION_HDR.mid)
+		{
+			GPS_LOCATION_t can_msg_loc = {0};
+			dbc_decode_GPS_LOCATION(&can_msg_loc,can_msg.data.bytes, &can_msg_hdr);
+			checkpoints_data.cur_loc_lat = can_msg_loc.GPS_LOCATION_latitude;
+			checkpoints_data.cur_loc_long = can_msg_loc.GPS_LOCATION_longitude;
+#ifdef DEBUG_PRINTF
+			printf("GET CURRENT LOCATION DATA\n");
+#endif
+		}
+		else if(can_msg.msg_id == STOP_CMD_APP_HDR.mid)
+		{
+			car_state = STOP_CAR;
+#ifdef DEBUG_PRINTF
+			printf("RX STOP CAR CMD\n");
+#endif
+		}
+
+	}
 }
 
 

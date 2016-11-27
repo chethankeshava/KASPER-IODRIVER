@@ -1,3 +1,4 @@
+
 /*
  *     SocialLedge.com - Copyright (C) 2013
  *
@@ -27,14 +28,12 @@
  * For example, the 1000Hz take slot runs periodically every 1ms, and whatever you
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
-
+#include <stdio.h>
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "master_controller.h"
 #include "file_logger.h"
-
-static uint8_t power_sync = 0;
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -57,14 +56,14 @@ bool period_init(void)
 		LOG_INFO("MASTER CTL : Failed to initialize can bus\n");
 	}
 #endif
-    return true; // Must return true upon success
+	return true; // Must return true upon success
 }
 
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
-    // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
-    return true; // Must return true upon success
+	// Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+	return true; // Must return true upon success
 }
 
 
@@ -76,37 +75,31 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 #ifdef MASTER
-
+	/* Check for bus off every 1Hz*/
 	is_bus_off();
-	status_t status;
-	status = read_controller_heartbeat();
-	if(status && !power_sync)
-	{
-		power_sync++;
-		send_power_sync_ack();
-	}
-
 #endif
 }
 
 void period_10Hz(uint32_t count)
 {
 #ifdef MASTER /* To test tx from master */
-	if(cmd_from_app())
-	{
-		avoid_obstacle_and_drive();
-	}
+	drive_car();
 #endif
 }
 
 void period_100Hz(uint32_t count)
 {
-    LE.toggle(3);
+#ifdef MASTER
+	/* Accumulate All CAN Messages */
+	receive_data_from_can();
+#endif
+	//LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-    LE.toggle(4);
+	LE.toggle(4);
 }
+

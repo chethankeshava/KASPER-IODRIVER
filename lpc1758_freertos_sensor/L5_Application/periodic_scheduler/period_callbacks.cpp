@@ -31,39 +31,10 @@
 #include <stdint.h>
 #include "io.hpp"
 #include "periodic_callback.h"
-#include "string.h"
-#include "_can_dbc//generated_can.h"
-#include "can.h"
 #include <stdio.h>
-#include "soft_timer.hpp"
-#include "lpc_timers.h"
-#include "utilities.h"
-#include <math.h>
-#include "gpio.hpp"
-#include "eint.h"
-
-GPIO inputPWPin(P2_1);    //input-PW Pin--Center
-GPIO outputRxPin(P2_0);  //output-RX Pin--Center
-GPIO inputPWPinLeft(P2_3);    //input-PW Pin--Left
-GPIO outputRxPinLeft(P2_2);  //output-RX Pin--Left
-GPIO inputPWPinRight(P2_5);    //input-PW Pin--right
-GPIO outputRxPinRight(P2_4);  //output-RX Pin--right
-
-SENSOR_SONIC_t sensor_msg= { 0 };
-
-	uint64_t T1;
-	uint64_t T2_Right,T2_Left,T2_Center;
-	int Distance_left,Distance_center,Distance_right =0;
-
-	bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
-	{
-	    can_msg_t can_msg = { 0 };
-	    can_msg.msg_id  = mid;
-	    can_msg.frame_fields.data_len = dlc;
-	    memcpy(can_msg.data.bytes, bytes, dlc);
-	   printf("sending......\n");
-	    return CAN_tx(can1, &can_msg, 0);
-	}
+#include "file_logger.h"
+#include "sensor.hpp"
+#include <tasks.hpp>
 
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -75,89 +46,33 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
  */
 const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 
-void eintCallbackright_Rise()
-{
-	T1=sys_get_uptime_us();
-//	printf("T1: %d\n",T1);
-  //Note down the system start time for right sensor ( start_right_time)
-}
-
-void eintCallbackright_Fall_Center()
-{
-	T2_Center=sys_get_uptime_us();
-  //Note down the system start time for right sensor ( start_right_time)
-//	printf("T2: %d\n",T2);
-	Distance_center=(T2_Center-T1)/147;
-
-	sensor_msg.SENSORS_SONIC_front_center=Distance_center;
-
-//	printf("Distance Center: %d    ",Distance_center);
-	//printf("Distance Center: %d ",sensor_msg.SENSORS_SONIC_front_center);
-}
-
-void eintCallbackright_Fall_Left()
-{
-	T2_Left=sys_get_uptime_us();
-  //Note down the system start time for right sensor ( start_right_time)
-//	printf("T2: %d\n",T2);
-	Distance_left=(T2_Left-T1)/147;
-
-	sensor_msg.SENSORS_SONIC_front_left=Distance_left;
-
-	//printf("Distance Left: %d   ",Distance_left);
-	//printf("Distance Left: %d ",sensor_msg.SENSORS_SONIC_front_left);
-}
-
-void eintCallbackright_Fall_Right()
-{
-	T2_Right=sys_get_uptime_us();
-  //Note down the system start time for right sensor ( start_right_time)
-//	printf("T2: %d\n",T2);
-	Distance_right=(T2_Right-T1)/147;
-
-	sensor_msg.SENSORS_SONIC_front_right=Distance_right;
-
-	//printf("Distance Right: %d   \n",Distance_right);
-	//printf("Distance Right: %d\n",sensor_msg.SENSORS_SONIC_front_right);
-}
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	//printf("init\n");
 	CAN_init(can1,100, 20, 20, 0, 0);
 		CAN_reset_bus(can1);
+		LD.setNumber(44);
 
-	inputPWPin.setAsInput();
-	inputPWPin.enablePullDown();
-	outputRxPin.setAsOutput();
-	outputRxPin.setHigh();
+//		eint3_enable_port2(2, eint_falling_edge, Calculate_Distance_left); //Left Sonar
+//		eint3_enable_port2(1, eint_falling_edge, Calculate_Distance_center); //Middle Sonar
+//		eint3_enable_port2(5, eint_falling_edge, Calculate_Distance_right); //Right Sonar
+		//eint3_enable_port2(3, eint_falling_edge, Calculate_Distance_rear); //Rear Sonar*/
 
-	inputPWPinLeft.setAsInput();
-	inputPWPinLeft.enablePullDown();
-	outputRxPinLeft.setAsOutput();
-	outputRxPinLeft.setHigh();
+	//	LeftRX.setAsOutput(); // set p2.2 as an output pin to enable or disable Left Sonar
+		//CenterRX.setAsOutput();//set p2.0 as an output pin to enable or disable Center Sonar
+		//RightRX.setAsOutput();//set p2.4 as an output pin to enable or disable Right Sonar
+		//BackRX.setAsOutput();//set p2.6 as an output pin to enable or disable Rear Sonar
 
-	inputPWPinRight.setAsInput();
-	inputPWPinRight.enablePullDown();
-	outputRxPinRight.setAsOutput();
-	outputRxPinRight.setHigh();
-
-	eint3_enable_port2(3, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback left
-	eint3_enable_port2(3, eint_falling_edge, eintCallbackright_Fall_Left); //Interrupt function callback left
-	eint3_enable_port2(1, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback center
-	eint3_enable_port2(1, eint_falling_edge, eintCallbackright_Fall_Center); //Interrupt function callback center
-	eint3_enable_port2(5, eint_rising_edge, eintCallbackright_Rise);  //Interrupt function callback right
-	eint3_enable_port2(5, eint_falling_edge, eintCallbackright_Fall_Right); //Interrupt function callback right
-
-    return true; // Must return true upon success
+		delay_ms(251); //250ms after powerup sensor is ready to receive commands
+	return true; // Must return true upon success
 }
 
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
-    // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
-    return true; // Must return true upon success
+	// Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
+	return true; // Must return true upon success
 }
 
 /**
@@ -167,35 +82,29 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-   // LE.toggle(1);
-	 if(CAN_is_bus_off(can1))
-		  {
-			  CAN_reset_bus(can1);
-			  printf("BUS is off!!!!!!");
-		  }
+	// LE.toggle(1);
+	if(CAN_is_bus_off(can1))
+		{
+			CAN_reset_bus(can1);
+			printf("Bus off!!!");
+		}
+
 }
 
 void period_10Hz(uint32_t count)
 {
-	// LE.toggle(2);
-	if(dbc_encode_and_send_SENSOR_SONIC(&sensor_msg))
-    {
-   LD.setNumber(88);
-   printf("values:");
-	  printf("center:%d ",sensor_msg.SENSORS_SONIC_front_center);
-	   printf("left:%d ",sensor_msg.SENSORS_SONIC_front_left);
-	   printf("right:%d\n",sensor_msg.SENSORS_SONIC_front_right);
-    }
+	//LE.toggle(2);
+		Sensor();
 }
 
 void period_100Hz(uint32_t count)
 {
-    //LE.toggle(3);
+	//LE.toggle(3);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-   // LE.toggle(4);
+	// LE.toggle(4);
 }
