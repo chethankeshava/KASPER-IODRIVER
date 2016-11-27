@@ -22,13 +22,11 @@ SENSOR_SONIC_t sensor_msg={0};
 
 void Sensor(){
 	Sensor_left();
-	delay_ms(15);
+	Sensor_right();
+	delay_ms(24);
 	Sensor_center();
-	delay_ms(15);
-	Sensor_right();
-	delay_ms(15);
-	Sensor_right();
-	delay_ms(15);
+	//Sensor_back();
+	delay_ms(24);
 	Transmit();
 }
 
