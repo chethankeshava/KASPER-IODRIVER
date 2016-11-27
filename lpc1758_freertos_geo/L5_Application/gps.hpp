@@ -15,12 +15,13 @@
 
 void geoSendGpsData();
 void geoSendHeartBeat();
-class gpsTask : public scheduler_task
+
+class gpsTask
 {
     public:
-		gpsTask(uint8_t priority);
+		gpsTask();
         bool init(void);
-        bool run(void *p);
+        bool readGpsData();
 
     private:
 		Uart2 &gpsUart;

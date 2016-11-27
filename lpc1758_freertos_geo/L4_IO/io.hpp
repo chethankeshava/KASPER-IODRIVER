@@ -37,7 +37,7 @@
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
 #include "compass.hpp"
-
+#include "lsm303_compass.hpp"
 /**
  * @{ Short-hand notation of getting to the on-board IO Devices
  * @ingroup BoardIO
@@ -50,6 +50,7 @@
 #define LE      	LED::getInstance()                 ///< 4 On-board LEDs
 #define SW      	Switches::getInstance()            ///< 4 On-board Switches
 #define compassi2c 	compass::getInstance()
+#define LSM		lsm303_compass::getInstance()		/// LSM Sensor
 /** @} */
 
 
