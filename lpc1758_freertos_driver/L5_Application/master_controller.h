@@ -5,8 +5,10 @@
 #include <../_can_dbc/generated_can.h>
 #include <stdint.h>
 
+#define SENSOR_MIA_TIMEOUT 10
+
 #define MASTER
-#define DEBUG_PRINTF
+//#define DEBUG_PRINTF
 
 typedef bool status_t;
 
@@ -56,7 +58,8 @@ enum MOTOR_DIRECTION{
  *
  */
 enum OBSTACLE_RANGE{
-	NEAR = 0,
+	VERY_NEAR = 0,
+	NEAR,
 	MEDIUM,
 	FAR,
 };
