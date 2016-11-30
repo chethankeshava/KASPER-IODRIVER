@@ -18,17 +18,23 @@
 #define 	PMTK_SET_NMEA_OUTPUT_100 		"$PMTK220,100*2F\r\n"
 #define 	GPS_BAUD_RATE 					9600			///	100Kbps baud rate
 
+
+//extern Uart2 &gpsUart;
+
 /**
  * todo: try to avoid global variables.
  */
 
+
 char gpsData[GPS_DATA_LEN];
 char gBuffer[256];							/// Global buffer for received data
-int latitude =0;
-int longitude =0;
+float latitude =0;
+float longitude =0;
 float latitude_min =0.0;
 float longitude_min =0.0;
-
+int32_t latitude_fixed, longitude_fixed;
+float latitudeDegrees, longitudeDegrees;
+float geoidheight, altitude;
 
 /**************************************************************************************************
 *
@@ -54,6 +60,7 @@ bool parseGpsData(char *buffer)
 {
 	char latBuf[8]={0};
 	char *tok = NULL;
+
 	tok = strtok((char *)buffer, ",");
 	if (! tok)
 		return false;
@@ -64,49 +71,46 @@ bool parseGpsData(char *buffer)
 		if (!tok)
 			return false;
 
-
-		u0_dbg_printf("%s\n",tok);
-
 		tok = strtok(NULL, ",");
 		if (!tok)
 			return false;
-
-		u0_dbg_printf("%s\n",tok);
 
 		if(!strcmp(tok,"V"))
 		{
 			u0_dbg_printf("void(Invalid) data\n");
 			latitude = 0;
 			longitude = 0;
-			//return true;
+			return true;
 		}
 
+		// Parsing Latitude
 		tok = strtok(NULL, ",");
 		if (!tok)
 			return false;
 		latBuf[0]=tok[0];
 		latBuf[1]=tok[1];
-		latitude = atoi(latBuf);
-		u0_dbg_printf("%d\n",latitude);
+		latitude = atof(latBuf);
 		latitude_min = atof(&tok[2]);
-		u0_dbg_printf("%.4f\n",latitude_min);
+		latitude_min /= 60;
+		latitude = latitude + latitude_min;
+		u0_dbg_printf("%f\n",latitude);
 
 		tok = strtok(NULL, ",");
 		if (!tok)
 			return false;
-		u0_dbg_printf("%s\n",tok);
 
+		// Parsing Longitude
 		tok = strtok(NULL, ",");
 		if (!tok)
 			return false;
+
 		latBuf[0]=tok[0];
 		latBuf[1]=tok[1];
 		latBuf[2]=tok[2];
-		longitude = atoi(latBuf);
-
+		longitude = atof(latBuf);
 		longitude_min = atof(&tok[3]);
-		u0_dbg_printf("%.4f\n",longitude_min);
-
+		longitude_min /= 60;
+		longitude = longitude + longitude_min;
 
 		tok = strtok(NULL, ",");
 		if (!tok)
@@ -116,7 +120,8 @@ bool parseGpsData(char *buffer)
 			longitude *= -1;
 		}
 
-		u0_dbg_printf("%d\n",longitude);
+		u0_dbg_printf("%f\n",longitude);
+
 	}
 	return true;
 }
@@ -157,11 +162,16 @@ void gpsSetRMCOnlyOutput()
 /**************************************************************************************************
 *
 **************************************************************************************************/
-gpsTask::gpsTask(uint8_t priority) :
-	            scheduler_task("gpsTask", 2000, priority),gpsUart(Uart2::getInstance())
+gpsTask::gpsTask() : gpsUart(Uart2::getInstance())
 {
 	/* Nothing to init */
-	u0_dbg_printf("Initializing uart\n");
+}
+
+/**************************************************************************************************
+*
+**************************************************************************************************/
+bool gpsTask::init(void)
+{
 	gpsUart.init(GPS_BAUD_RATE,rx_q,tx_q);
 	char gprmcOnly[] = "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n";
 	char frequency[] = "$PMTK220,100*2F\r\n";
@@ -180,16 +190,6 @@ gpsTask::gpsTask(uint8_t priority) :
 		gpsPutch(frequency[i]);
 		delay_ms(1);
 	}
-
-}
-
-/**************************************************************************************************
-*
-**************************************************************************************************/
-bool gpsTask::init(void)
-{
-
-	gpsInit();
 	//gpsSetRMCOnlyOutput();
 
 	//NVIC_EnableIRQ(UART2_IRQn);
@@ -199,13 +199,29 @@ bool gpsTask::init(void)
 /**************************************************************************************************
 *
 **************************************************************************************************/
-bool gpsTask::run(void *p)
+bool gpsTask::readGpsData(void)
 {
-	char rxBuff[256];
-	char gpsStr[256];
-	gpsUart.gets(rxBuff, sizeof(rxBuff), portMAX_DELAY);
-	u0_dbg_printf("Received data is %s\n",rxBuff);
+	char rxBuff[256]={};
+	char gpsStr[256]={};
+	int i=0;
+	char c=0;
+
+	while(gpsUart.getChar(&c, portMAX_DELAY))
+	{
+		if ('\r' != c && '\n' != c)
+		{
+			rxBuff[i++] = c;
+		}
+		if('\n' == c )
+		{
+			break;
+		}
+	}
+
+	rxBuff[i++] = '\0';
+
 	strncpy(gpsStr,rxBuff,sizeof(rxBuff));
+
 	parseGpsData(gpsStr);
 	return true;
 }

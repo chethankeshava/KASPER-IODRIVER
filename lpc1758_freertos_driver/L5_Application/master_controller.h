@@ -30,11 +30,11 @@ enum MOTOR_SPEED{
  *
  */
 enum MOTOR_TURN{
-	STRAIGHT = 0,
+	SLIGHT_LEFT = -2,
+	HARD_LEFT,
+	STRAIGHT,
 	SLIGHT_RIGHT,
 	HARD_RIGHT,
-	SLIGHT_LEFT,
-	HARD_LEFT,
 };
 
 /*
@@ -58,8 +58,27 @@ enum MOTOR_DIRECTION{
 enum OBSTACLE_RANGE{
 	NEAR = 0,
 	MEDIUM,
-	FAR
+	FAR,
 };
+
+enum STATE_CAR{
+	START_CAR,
+	SEND_CHECKPOINTS,
+	NAVIGATING,
+	STOP_CAR,
+	INITIAL_STATE,
+};
+
+
+typedef struct{
+    float latitude[20];
+    float longitude[20];
+	uint8_t total_points;
+	uint8_t geo_update_pos;
+	uint8_t position;
+	float cur_loc_lat;
+	float cur_loc_long;
+}checkpoints_data_t;
 
 
 /* FUNCTION DECLARATIONS */
@@ -70,10 +89,6 @@ void is_bus_off(void);
 /* Initialize can for master controller */
 status_t init_can_master(void);
 
-/* Check for periodic heartbeat from each controller */
-// TODO: Check if reset function needs to be included.
-status_t read_controller_heartbeat(void);
-
 /* Avoid obstacles based on sensor readings and drive the motor */
 status_t avoid_obstacle_and_drive(void);
 
@@ -83,10 +98,14 @@ SENSOR_SONIC_t receive_sensor_data(void);
 /* Receive Start/Stop command from Application */
 status_t cmd_from_app(void);
 
-/* Send power sync acknowledgement to all controllers to start the periodic transactions */
+/* Send power sync acknowledgment to all controllers to start the periodic transactions */
 status_t send_power_sync_ack(void);
+
+void test_motor();
 
 /* TODO: Determine range based on sensor readings */
 //OBSTACLE_RANGE determine_obstacle_range(&can_msg_sensor_data);
+void drive_car(void);
 
+void receive_data_from_can(void);
 #endif

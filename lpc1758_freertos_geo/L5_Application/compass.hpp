@@ -31,11 +31,12 @@
 
 
 
+
 //#define compassi2c compass::getInstance()
 
 class compass : public i2c2_device, public SingletonTemplate<compass>
 {
-private:
+	private:
 
         int xOffset, yOffset;
         float mgPerDigit;
