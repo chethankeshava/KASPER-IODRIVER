@@ -1,0 +1,82 @@
+Conversion Warnings Log
+
+
+MSG_ID: 100 	MSG_TYPE: S 	MSG_NAME: STOP_CAR
+	SIG_NAME: STOP_CAR_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 110 	MSG_TYPE: S 	MSG_NAME: RESET
+	SIG_NAME: RESET_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 120 	MSG_TYPE: S 	MSG_NAME: POWER_SYNC_ACK
+	SIG_NAME: POWER_SYNC_ACK_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 130 	MSG_TYPE: S 	MSG_NAME: STOP_CMD_APP
+	SIG_NAME: STOP_CMD_APP_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 140 	MSG_TYPE: S 	MSG_NAME: START_CMD_APP
+	SIG_NAME: START_CMD_APP_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 200 	MSG_TYPE: S 	MSG_NAME: MOTOR_POWER_SYNC
+	SIG_NAME: MOTOR_POWER_SYNC_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 210 	MSG_TYPE: S 	MSG_NAME: SENSOR_POWER_SYNC
+	SIG_NAME: SENSOR_POWER_SYNC_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 220 	MSG_TYPE: S 	MSG_NAME: BRIDGE_POWER_SYNC
+	SIG_NAME: GEO_POWER_SYNC_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 230 	MSG_TYPE: S 	MSG_NAME: GEO_POWER_SYNC
+	SIG_NAME: BRIDGE_POWER_SYNC_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 300 	MSG_TYPE: S 	MSG_NAME: MOTORIO_HEARTBEAT
+	SIG_NAME: MOTORIO_HEARTBEAT_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 310 	MSG_TYPE: S 	MSG_NAME: SENSOR_HEARTBEAT
+	SIG_NAME: SENSOR_HEARTBEAT_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 320 	MSG_TYPE: S 	MSG_NAME: BRIDGE_HEARTBEAT
+	SIG_NAME: BRIDGE_HEARTBEAT_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 330 	MSG_TYPE: S 	MSG_NAME: GEO_HEARTBEAT
+	SIG_NAME: GEO_HEARTBEAT_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 400 	MSG_TYPE: S 	MSG_NAME: SENSOR_SONIC
+	SIG_NAME: SENSORS_SONIC_front_left, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: SENSORS_SONIC_front_right, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: SENSORS_SONIC_front_center, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: SENSORS_SONIC_back, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 420 	MSG_TYPE: S 	MSG_NAME: BRIDGE_TOTAL_CHECKPOINT
+	SIG_NAME: BRIDGE_TOTAL_CHECKPOINT_NUMBER, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 430 	MSG_TYPE: S 	MSG_NAME: RECEIVE_START_ACK
+	SIG_NAME: RECEIVE_START_ACK_ack, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 440 	MSG_TYPE: S 	MSG_NAME: BLUETOOTH_DATA
+	SIG_NAME: BLUETOOTH_DATA_LAT, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: BLUETOOTH_DATA_LON, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 450 	MSG_TYPE: S 	MSG_NAME: NEXT_CHECKPOINT_DATA
+	SIG_NAME: NEXT_CHECKPOINT_DATA_latitude, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: NEXT_CHECKPOINT_DATA_longitude, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 460 	MSG_TYPE: S 	MSG_NAME: COMPASS_DATA
+	SIG_NAME: COMPASS_DATA_speed, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: COMPASS_DATA_heading, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: COMPASS_DATA_bearing, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 470 	MSG_TYPE: S 	MSG_NAME: CURRENT_LOCATION_ACK
+	SIG_NAME: CURRENT_LOCATION_ACK_ack, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 480 	MSG_TYPE: S 	MSG_NAME: GPS_LOCATION
+	SIG_NAME: GPS_LOCATION_latitude, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: GPS_LOCATION_longitude, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 490 	MSG_TYPE: S 	MSG_NAME: DISTANCE_TO_DESTINATION
+	SIG_NAME: DISTANCE_TO_DESTINATION_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+
+MSG_ID: 500 	MSG_TYPE: S 	MSG_NAME: BATTERY_STATUS
+	SIG_NAME: DISTANCE_TO_DESTINATION_status, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+BA_DEF_DEF_ " "  : Match not Found in Param List
+BA_DEF_DEF_ " "  : Match not Found in Param List
+BA_DEF_DEF_ " 0;"  : Match not Found in Param List

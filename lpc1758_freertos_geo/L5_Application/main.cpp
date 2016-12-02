@@ -29,7 +29,6 @@
 #include "compass.hpp"
 #include "adc0.h"
 #include "utilities.h"
-#include "lcd.hpp"
 #include "io.hpp"
 #include "printf_lib.h"
 #include <stdio.h>
@@ -132,44 +131,11 @@ int main(void)
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     //scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
-	float latitude = 37.342423;
-	float longitude = -121.432534;
 
-	lcdInit();
-
-	// Display FORM1
-	//01 0A 01 00 00 0A
-
-	// Display FORM0
-	//lcdWriteObj(LCD_OBJ_FORM,LCD_FORM0_INDEX,0);
-
-	// Display FORM1
-	//lcdWriteObj(LCD_OBJ_FORM,LCD_FORM1_INDEX,0);
-
-	// Display FORM2
-	lcdWriteObj(LCD_OBJ_FORM,LCD_FORM2_INDEX,0);
-
-
-
-	lcdWriteObj(LCD_OBJ_LED_DIGITS,LCD_LEDDIGIT_INDEX,108);
-
-
-
-
-	//sprintf(lcdStringBuffer,"%f",latitude);
-	//lcdWriteStr(LATITUDE_STRING_INDEX,lcdStringBuffer);
-	//sprintf(lcdStringBuffer,"%f",longitude);
-	//lcdWriteStr(LONGITUDE_STRING_INDEX,lcdStringBuffer);
-
-	while(1)
-	{
-		delay_ms(100);
-	}
-
-#if 0
-  const bool run_1Khz = false;
-  scheduler_add_task(new periodicSchedulerTask(run_1Khz));
-  #endif
+	#if 1
+	const bool run_1Khz = false;
+	scheduler_add_task(new periodicSchedulerTask(run_1Khz));
+	#endif
 
 
 	//scheduler_start();

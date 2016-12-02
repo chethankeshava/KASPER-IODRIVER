@@ -50,7 +50,8 @@
 #define LE      	LED::getInstance()                 ///< 4 On-board LEDs
 #define SW      	Switches::getInstance()            ///< 4 On-board Switches
 #define compassi2c 	compass::getInstance()
-#define LSM		lsm303_compass::getInstance()		/// LSM Sensor
+#define LSM			lsm303_compass::getInstance()		/// LSM Sensor
+#define LSM_ACCL	lsm303_compass_accl::getInstance()
 /** @} */
 
 

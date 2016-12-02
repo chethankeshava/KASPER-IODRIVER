@@ -10,23 +10,38 @@
 
 #include "scheduler_task.hpp"
 #include "uart2.hpp"
+#include "geo.hpp"
 
-#define 	GPS_CAN_BUS						can1
+#define EARTH_RADIUS_KM 6371
 
-void geoSendGpsData();
-void geoSendHeartBeat();
-
-class gpsTask
+class geoTask
 {
     public:
-		gpsTask();
+		geoTask();
         bool init(void);
         bool readGpsData();
+        void sendGpsData();
+        void calculateBearing();
+        bool parseGpsData(char *buffer);
+        void calculateDistance();
+        void sendCompassData();
+        void setChkPointData(float chkLatitude,float chkLongitude);
 
     private:
 		Uart2 &gpsUart;
 		static const int rx_q = 100;
 		static const int tx_q = 100;
+		float curLatitude =0.0;
+		float curLongitude =0.0;
+		float chkPointLatitude =0.0;
+		float chkPointLongitude =0.0;
+		float bearing=0.0;
+		float heading=0.0;
+		uint16_t distance=0;
+		uint8_t speed=0;
+		//compass compassObject;
 };
+
+
 #endif /* L5_APPLICATION_GPS_HPP_ */
 

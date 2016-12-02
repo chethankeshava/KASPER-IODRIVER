@@ -137,7 +137,7 @@ void compass::setDataRate(hmc5883l_dataRate_t dataRate)
 
 }
 
-void compass::getHeading()
+void compass::getHeading(float *curHeading)
 {
 	readNormalize();
 	float headingDegrees=0.0;
@@ -164,9 +164,9 @@ void compass::getHeading()
 	}
 
 	// Convert to degrees
-	headingDegrees = (heading * 180/M_PI);
+	*curHeading = (heading * 180/M_PI);
 
-	u0_dbg_printf("Heading value is %.2f,%.2f\n",heading,headingDegrees);
+	u0_dbg_printf("Heading value is %.2f,%.2f\n",heading,curHeading);
 	v={0};
 
 }
