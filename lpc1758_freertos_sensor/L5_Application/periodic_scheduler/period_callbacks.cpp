@@ -35,7 +35,8 @@
 #include "file_logger.h"
 #include "sensor.hpp"
 #include <tasks.hpp>
-
+#include <time.h>
+//time_t curtime;
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 /**
@@ -48,23 +49,13 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
+
 bool period_init(void)
 {
 	CAN_init(can1,100, 20, 20, 0, 0);
-		CAN_reset_bus(can1);
-		LD.setNumber(44);
-
-		eint3_enable_port2(3, eint_falling_edge, Calculate_Distance_left); //Left Sonar
-		eint3_enable_port2(1, eint_falling_edge, Calculate_Distance_center); //Middle Sonar
-		eint3_enable_port2(5, eint_falling_edge, Calculate_Distance_right); //Right Sonar
-		//eint3_enable_port2(3, eint_falling_edge, Calculate_Distance_rear); //Rear Sonar*/
-
-		LeftRX.setAsOutput(); // set p2.2 as an output pin to enable or disable Left Sonar
-		CenterRX.setAsOutput();//set p2.0 as an output pin to enable or disable Center Sonar
-		RightRX.setAsOutput();//set p2.4 as an output pin to enable or disable Right Sonar
-		//BackRX.setAsOutput();//set p2.6 as an output pin to enable or disable Rear Sonar
-
-		delay_ms(251); //250ms after powerup sensor is ready to receive commands
+	CAN_reset_bus(can1);
+	LD.setNumber(44);
+	delay_ms(251); //250ms after powerup sensor is ready to receive commands
 	return true; // Must return true upon success
 }
 
@@ -84,18 +75,19 @@ void period_1Hz(uint32_t count)
 {
 	// LE.toggle(1);
 	if(CAN_is_bus_off(can1))
-		{
-			CAN_reset_bus(can1);
-			printf("Bus off!!!");
-		}
-
+	{
+		CAN_reset_bus(can1);
+		printf("Bus off!!!");
+	}
 }
 
 void period_10Hz(uint32_t count)
 {
 	//LE.toggle(2);
-		Sensor();
+	Sensor();
+	Transmit();
 }
+
 
 void period_100Hz(uint32_t count)
 {

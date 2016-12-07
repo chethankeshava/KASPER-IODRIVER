@@ -29,6 +29,75 @@
 #include "compass.hpp"
 #include "adc0.h"
 #include "utilities.h"
+#include "io.hpp"
+#include "printf_lib.h"
+#include <stdio.h>
+
+char ack=0;
+//uint8_t angleXMsb = 0;
+//uint8_t angleXLsb = 0;
+//uint8_t angleYMsb = 0;
+//uint8_t angleYLsb = 0;
+//uint8_t angleZMsb = 0;
+//uint8_t angleZLsb = 0;
+//int16_t X = 0;
+//int16_t Y = 0;
+//int16_t Z = 0;
+
+char lcdStringBuffer[30]={0};
+
+#if 0
+class lsm303_sensor : public scheduler_task
+{
+	public:
+		lsm303_sensor (uint8_t priority):scheduler_task("process", 2048, priority)
+	{
+
+	}
+
+	bool init(void)
+	{
+		LSM.init();
+		return true;
+	}
+
+	bool run(void *p)
+	{
+		while((LSM.getStatus() & 0x01 ) != 0x01);
+
+		angleXMsb = LSM.getXAngleMsb();
+		angleXLsb = LSM.getXAngleLsb();
+		angleYMsb = LSM.getYAngleMsb();
+		angleYLsb = LSM.getYAngleLsb();
+		angleZMsb = LSM.getZAngleMsb();
+		angleZLsb = LSM.getZAngleLsb();
+
+		//X = LSM.getX();
+		//Y = LSM.getY();
+		//Z = LSM.getZ();
+		//temperatureMsb = LSM.getTemperatureMsb();
+		//temperatureLsb = LSM.getTemperatureLsb();
+
+		//printf("X is %x\n",X);
+		//printf("Y is %x\n",Y);
+		//printf("Z is %x\n",Z);
+		printf("Angle X MSB is %d\n",angleXMsb);
+		printf("Angle X LSB is %d\n",angleXLsb);
+		printf("Angle Y MSB is %d\n",angleYMsb);
+		printf("Angle Y LSB is %d\n",angleYLsb);
+		printf("Angle Z MSB is %d\n",angleZMsb);
+		printf("Angle Z LSB is %d\n",angleZLsb);
+
+		//printf("Temperature MSB is %d\n",temperatureMsb);
+		//printf("Temperature LSB is %d\n",temperatureLsb);
+
+		vTaskDelay(20000);
+
+		return true;
+	}
+
+};
+#endif
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -62,11 +131,17 @@ int main(void)
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     //scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
-    scheduler_add_task(new gpsTask(PRIORITY_CRITICAL));
 
+	#if 1
+	const bool run_1Khz = false;
+	scheduler_add_task(new periodicSchedulerTask(run_1Khz));
+	#endif
+
+
+	//scheduler_start();
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-    #if 1
+    #if 0
     const bool run_1Khz = false;
     scheduler_add_task(new periodicSchedulerTask(run_1Khz));
     #endif

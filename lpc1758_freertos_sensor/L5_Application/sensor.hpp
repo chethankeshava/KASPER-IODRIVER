@@ -1,7 +1,7 @@
 /*
  * sensor.hpp
  *
- *  Created on: Nov 7, 2016
+ *  Created on: Nov 28, 2016
  *      Author: Rimjhim & Shruthi
  */
 
@@ -18,15 +18,10 @@
 #include "can.h"
 #include "eint.h"
 
-extern GPIO LeftRX;   // left RXpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
-extern GPIO CenterRX; // Center
-extern GPIO RightRX; // Right
-//extern GPIO BackRX;  //Back
-
-void Calculate_Distance_left(void);
-void Calculate_Distance_center(void);
-void Calculate_Distance_right(void);
-//void Calculate_Distance_back(void);
+extern GPIO  LeftSIG;   // left SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
+extern GPIO CenterSIG; // Center SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
+extern GPIO RightSIG; // Right SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
+//extern GPIO BackSIG;  //Back SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
 
 void Sensor_left(void);
 void Sensor_center(void);

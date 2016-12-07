@@ -27,23 +27,33 @@
  * For example, the 1000Hz take slot runs periodically every 1ms, and whatever you
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
-
+#include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "gps.hpp"
 #include "compass.hpp"
 #include "printf_lib.h"
 #include "can.h"
+#include "utilities.h"
 #include "../_can_dbc/generated_can.h"
+#include "eint.h"
+#include "gpio.hpp"
+#include "geo.hpp"
+#include "gps.hpp"
+
 
 #define 	GPS_CAN_RX_QUEUE_SIZE			16
 #define 	GPS_CAN_TX_QUEUE_SIZE			16
 
 
+geoTask geotask;
 bool receivedAck = false;
+
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -53,18 +63,29 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
  */
 const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 
+
+
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	can_msg_t can_msg={0};
+	can_msg_t msg;
 
+	// Initialize compass module
 	if(!(compassi2c.init()))
 	{
 		u0_dbg_printf("Device not present\n");
 		return false;
 	}
 
-	if(CAN_init(GPS_CAN_BUS, 100, GPS_CAN_RX_QUEUE_SIZE, GPS_CAN_TX_QUEUE_SIZE, NULL, NULL))
+	// Initialize GEO module
+	if(!geotask.init())
+	{
+		u0_dbg_printf("GEO not initialized\n");
+		return false;
+	}
+
+	// Initialize CAN bus
+	if(CAN_init(GEO_CAN_BUS, 100, GPS_CAN_RX_QUEUE_SIZE, GPS_CAN_TX_QUEUE_SIZE, NULL, NULL))
 	{
 		u0_dbg_printf("Initialize CAN module\n");
 	}
@@ -73,35 +94,37 @@ bool period_init(void)
 		u0_dbg_printf("unable to initialize CAN module\n");
 	}
 
-	CAN_reset_bus(GPS_CAN_BUS);
+	// Put CAN bus in normal mode
+	CAN_reset_bus(GEO_CAN_BUS);
+
+	// Receive all messages
 	CAN_bypass_filter_accept_all_msgs();
 
-    /**
-     * todo: NO while loops in RTOS systems.
-     */
+	// Power sync ACK
+#if 0
 	while(!receivedAck)
 	{
-		if(CAN_is_bus_off(GPS_CAN_BUS))
+		if(CAN_is_bus_off(GEO_CAN_BUS))
 		{
-			CAN_reset_bus(GPS_CAN_BUS);
+			CAN_reset_bus(GEO_CAN_BUS);
 		}
 
 		geoSendHeartBeat();
 
-		if (CAN_rx(can1, &can_msg, 0))
+		if (CAN_rx(can1, &msg, 0))
 		{
-			if(can_msg.msg_id == POWER_SYNC_ACK_HDR.mid)
+			if(msg.msg_id == POWER_SYNC_ACK_HDR.mid)
 			{
 				u0_dbg_printf("Received ACK from master\n");
 				receivedAck = true;
-
+				LD.setNumber(10);
 			}
 
-
 		}
+
+		delay_ms(1);
 	}
-
-
+#endif
 	return true; // Must return true upon success
 }
 
@@ -120,26 +143,36 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    LE.toggle(1);
-    /**
-     * todo: will running this at 1Hz be fast enough? If you are parsing GPS data at 10Hz
-     *          maybe you should consider running your heading calculations at the same rate.
-     */
-    compassi2c.getHeading();
-
-	if(CAN_is_bus_off(GPS_CAN_BUS))
+	if(CAN_is_bus_off(GEO_CAN_BUS))
 	{
-		CAN_reset_bus(GPS_CAN_BUS);
+		CAN_reset_bus(GEO_CAN_BUS);
 	}
-	u0_dbg_printf("Sending heart beat\n");
-    geoSendHeartBeat();
+
+	geotask.sendGpsData();
+	geotask.sendCompassData();
+
 }
 
 void period_10Hz(uint32_t count)
 {
-    LE.toggle(2);
-    geoSendHeartBeat();
-    geoSendGpsData();
+	NEXT_CHECKPOINT_DATA_t checkPointData;
+	can_msg_t msg;
+
+	while(CAN_rx(GEO_CAN_BUS, &msg, 10))	// 100ms timeout for receive
+	{
+		u0_dbg_printf("Received a can frame with ID: %#4X\n", msg.msg_id);
+		if(msg.msg_id == NEXT_CHECKPOINT_DATA_HDR.mid)
+		{
+			dbc_msg_hdr_t can_msg_hdr;
+			can_msg_hdr.dlc = msg.frame_fields.data_len;
+			can_msg_hdr.mid = msg.msg_id;
+
+			u0_dbg_printf("Received Next way point data from master\n");
+
+			dbc_decode_NEXT_CHECKPOINT_DATA(&checkPointData, msg.data.bytes, &can_msg_hdr );
+			geotask.setChkPointData(checkPointData.NEXT_CHECKPOINT_DATA_latitude,checkPointData.NEXT_CHECKPOINT_DATA_longitude);
+		}
+	}
 }
 
 void period_100Hz(uint32_t count)
