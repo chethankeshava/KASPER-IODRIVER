@@ -35,7 +35,8 @@
 #include "file_logger.h"
 #include "sensor.hpp"
 #include <tasks.hpp>
-
+#include <time.h>
+//time_t curtime;
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 /**
@@ -48,13 +49,13 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
+
 bool period_init(void)
 {
 	CAN_init(can1,100, 20, 20, 0, 0);
 	CAN_reset_bus(can1);
 	LD.setNumber(44);
-
-	delay_ms(251); //250ms after powerup sensor is ready to receive commands
+	//delay_ms(251); //250ms after powerup sensor is ready to receive commands
 	return true; // Must return true upon success
 }
 
@@ -78,21 +79,20 @@ void period_1Hz(uint32_t count)
 		CAN_reset_bus(can1);
 		printf("Bus off!!!");
 	}
-
 }
 
 void period_10Hz(uint32_t count)
 {
 	//LE.toggle(2);
 	Sensor();
-	Sensor();
 	Transmit();
+	//Sensor();
+	//Transmit();
 }
 
 
 void period_100Hz(uint32_t count)
 {
-
 	//LE.toggle(3);
 }
 
