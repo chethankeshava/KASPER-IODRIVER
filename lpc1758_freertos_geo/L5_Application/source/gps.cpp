@@ -18,7 +18,9 @@
 #define 	PMTK_SET_NMEA_OUTPUT_100 		"$PMTK220,100*2F\r\n"
 #define 	GPS_BAUD_RATE 					9600			///	100Kbps baud rate
 
-
+/**
+ * todo: try to avoid global variables.
+ */
 
 char gpsData[GPS_DATA_LEN];
 char gBuffer[256];							/// Global buffer for received data
@@ -230,6 +232,9 @@ void geoSendGpsData()
 	GPS_LOCATION_t gps_data = { 0 };
 	//gps_data.GPS_LOCATION_latitude = 37.123456;
 	//gps_data.GPS_LOCATION_longitude = 121.123456;
+	/**
+	 * todo: avoid using global for these variables. Use get functions or a queue to pass the data.
+	 */
 	gps_data.GPS_LOCATION_latitude = latitude;
 	gps_data.GPS_LOCATION_longitude = longitude;
 

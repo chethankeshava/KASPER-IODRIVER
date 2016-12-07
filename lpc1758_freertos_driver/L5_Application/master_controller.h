@@ -30,11 +30,12 @@ enum MOTOR_SPEED{
  *
  */
 enum MOTOR_TURN{
-	STRAIGHT = 0,
+
+	SLIGHT_LEFT = -2,
+	HARD_LEFT,
+	STRAIGHT,
 	SLIGHT_RIGHT,
 	HARD_RIGHT,
-	SLIGHT_LEFT,
-	HARD_LEFT,
 };
 
 /*
@@ -58,8 +59,27 @@ enum MOTOR_DIRECTION{
 enum OBSTACLE_RANGE{
 	NEAR = 0,
 	MEDIUM,
-	FAR
+	FAR,
 };
+
+enum STATE_CAR{
+	START_CAR,
+	SEND_CHECKPOINTS,
+	NAVIGATING,
+	STOP_CAR,
+	INITIAL_STATE,
+};
+
+
+typedef struct{
+	float latitide[20];
+	float longitude[20];
+	int tot_points;
+	int geo_update_pos;
+	int position;
+	float cur_loc_lat;
+	float cur_loc_long;
+}checkpoints_data_t;
 
 
 /* FUNCTION DECLARATIONS */
@@ -86,7 +106,10 @@ status_t cmd_from_app(void);
 /* Send power sync acknowledgement to all controllers to start the periodic transactions */
 status_t send_power_sync_ack(void);
 
+void test_motor();
 /* TODO: Determine range based on sensor readings */
 //OBSTACLE_RANGE determine_obstacle_range(&can_msg_sensor_data);
+void drive_car(void);
 
+void receive_data_from_can(void);
 #endif

@@ -41,6 +41,10 @@ void canBusErrorCallBackRx(uint32_t ibits)
 	u0_dbg_printf("ERRC = %#x, ERRBIT = %#x while %s\n", errc, errbit, rxtx);
 }
 
+/** todo: May want to give this function a more descriptive name.
+ * uart_putchar is very generic and doesn't reflect that you are specifically
+ * sending something via your bluetooth.
+ */
 bool uart_putchar(char character)
 {
 	Uart2& Bluetooth_uart_2 = Uart2::getInstance();
@@ -104,6 +108,17 @@ void Can_Receive_ID_Task()
 		can_msg_hdr.dlc = can_msg_Info.frame_fields.data_len;
 		can_msg_hdr.mid = can_msg_Info.msg_id;
 		//u0_dbg_printf("id :%d\n",can_msg_hdr.mid);
+
+/**
+ * todo: You can use a switch statement here to speed up execution.
+ * Using these if statements will force the CPU to evaluate every condition even
+ * though can_msg_Info does not change.
+ */
+
+/**
+ * todo: Consider using the same message id for all these commands with different payload data.
+ * In real systems you don't want to waste message id's needlessly.
+ */
 		if(can_msg_Info.msg_id == STOP_CAR_HDR.mid)
 			printf("Case_STOP_CAR\n");
 		if(can_msg_Info.msg_id == RESET_HDR.mid)

@@ -15,6 +15,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -112,6 +113,13 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View view){
                 mConnectedThread.write("1\n");
+                // display google map Start
+                Intent intent = null, chooser = null;
+                intent = new Intent(android.content.Intent.ACTION_VIEW);
+                intent.setData(Uri.parse("geo:37.3403980,-121.8944450"));
+                chooser = Intent.createChooser(intent, "Launch Map");
+                // display google map end
+                startActivity(chooser);
             }
 
         });
@@ -241,9 +249,14 @@ public class MainActivity extends Activity {
         public void run() {
             byte[] buffer = new byte[256];  // buffer store for the stream
             int bytes; // bytes returned from read()
+            //new changes start
+            //Intent mapOpen = new Intent(MapsActivity);
+            //startActivityForResult(enableBtIntent, 1);
 
+            //new changes end
             // Keep listening to the InputStream until an exception occurs
             while (true) {
+
                 try {
                     // Read from the InputStream
                     bytes = mmInStream.read(buffer); // Get number of bytes and message in "buffer"

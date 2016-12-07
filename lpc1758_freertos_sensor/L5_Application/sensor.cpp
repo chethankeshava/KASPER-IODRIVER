@@ -8,6 +8,12 @@
 #include "sensor.hpp"
 #include "string.h"
 
+/**
+ * todo: try not to use global variables.
+ * 		 Use unsigned numbers here. You don't want some number rollover incident to cause
+ * 		 you to crash.
+ */
+
 int Trigger_left, Trigger_center, Trigger_right;
 //Trigger_back;
 int Distance_left, Distance_center, Distance_right;
@@ -21,13 +27,30 @@ GPIO  RightRX(P2_4); // Right RX pin
 SENSOR_SONIC_t sensor_msg={0};
 
 void Sensor(){
+	/**
+	 * todo: If you are going to use delays here ensure that you do not run over in time.
+	 */
+	static int sen_count=0;
+		if(sen_count%2)
+		{
 	Sensor_left();
 	Sensor_right();
-	delay_ms(24);
+	delay_ms(40);
+		}
+		else
+		{
 	Sensor_center();
 	//Sensor_back();
-	delay_ms(24);
+	delay_ms(40);
+		}
+
 	Transmit();
+
+	sen_count++;
+		if(sen_count>1000)
+		{
+			sen_count=0;
+		}
 }
 
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
@@ -54,6 +77,9 @@ void Transmit(void)
 
 void Calculate_Distance_left(void)
 {
+	/**
+	 * todo: avoid using magic numbers like 147.
+	 */
 	Distance_left = ((sys_get_uptime_us() - Trigger_left)/147) ; //each 147uS is 1 inch (Datasheet)
 	sensor_msg.SENSORS_SONIC_front_left=Distance_left;
 }
@@ -79,6 +105,9 @@ void Calculate_Distance_right(void)
 void Sensor_left(void)
 {
 	LeftRX.setHigh(); // enable Ranging   (enable left sonar)
+	/**
+	 * todo: magic number - 21
+	 */
 	delay_us(21); //hold high  >20uS to enable ranging
 	Trigger_left = sys_get_uptime_us(); //get timer at the moment ranging starts
 	LeftRX.setLow(); // disable ranging of left sonar
