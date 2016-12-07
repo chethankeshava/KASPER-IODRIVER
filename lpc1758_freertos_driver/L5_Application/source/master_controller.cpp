@@ -17,9 +17,11 @@
 #include "io.hpp"
 #include <string.h>
 
+#define DEMO_2 1
+
 SENSOR_SONIC_t can_msg_sensor_data = {0};
 POWER_SYNC_ACK_t power_sync_ack = {0};
-STATE_CAR car_state = START_CAR;
+STATE_CAR car_state = INITIAL_STATE;
 
 static status_t status_sensor = true, status_motorio = true, status_bridge = true, status_geo = true;
 
@@ -79,10 +81,9 @@ status_t avoid_obstacle_and_drive(void)
 	uint16_t sensor_center = sensor_data.SENSORS_SONIC_front_center;
 	uint16_t sensor_right = sensor_data.SENSORS_SONIC_front_right;
 
-
-	uint8_t ls_range = (sensor_left <= 45) ? NEAR : sensor_left <= 100 ? MEDIUM : FAR;
-	uint8_t rs_range = (sensor_right <= 45) ? NEAR : sensor_right <= 100 ? MEDIUM : FAR;
-	uint8_t centre_range = (sensor_center <= 45) ? NEAR : sensor_center <= 100 ? MEDIUM : FAR;
+	uint8_t ls_range = (sensor_left <= 5) ? VERY_NEAR : sensor_left <= 60 ? NEAR : sensor_left <= 120 ? MEDIUM : FAR;
+	uint8_t centre_range = (sensor_center <= 5) ? VERY_NEAR : sensor_center <= 60 ? NEAR : sensor_center <= 140 ? MEDIUM : FAR;
+	uint8_t rs_range = (sensor_right <= 5) ? VERY_NEAR : sensor_right <= 60 ? NEAR : sensor_right <= 120 ? MEDIUM : FAR;
 
 	// TODO: As Calvin has rightly commented, we need to handle backing up
 	if(centre_range == NEAR)
@@ -91,21 +92,22 @@ status_t avoid_obstacle_and_drive(void)
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
 	}
-	else if((ls_range == NEAR) && (centre_range == NEAR) && (rs_range == NEAR))
+	else if((ls_range == NEAR) && (rs_range == NEAR))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
 	}
+#ifdef DEMO_2
 	else if((ls_range == MEDIUM) && (centre_range != NEAR) && (rs_range == FAR))
 	{
-		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_RIGHT;
 	}
 	else if((ls_range == FAR) && (centre_range != NEAR) && (rs_range == MEDIUM))
 	{
-		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_LEFT;
 	}
@@ -123,16 +125,44 @@ status_t avoid_obstacle_and_drive(void)
 	}
 	else if((ls_range == MEDIUM) || (centre_range == MEDIUM) || (rs_range == MEDIUM))
 	{
+		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+	}
+#else
+	else if((ls_range == NEAR) || (rs_range == NEAR) || (centre_range == NEAR))
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+	}
+	else if((ls_range == MEDIUM) && (rs_range == FAR) && (centre_range == FAR))
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = HARD_RIGHT;
+	}
+	else if((rs_range == MEDIUM) && (ls_range == FAR) && (centre_range == FAR))
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = HARD_LEFT;
+	}
+	else if((ls_range == MEDIUM) && (centre_range == MEDIUM) && (rs_range == MEDIUM))
+	{
 		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
 	}
+#endif
 	else
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
 	}
+
+
 
 #ifdef DEBUG_PRINTF
 	printf("\nSensor value: Left = %u | Center = %u | Right = %u", sensor_left, sensor_center, sensor_right);
@@ -210,6 +240,7 @@ void receive_data_from_can(void)
 
 	can_msg_t can_msg;
 	dbc_msg_hdr_t can_msg_hdr;
+	status_t miastatus = false;
 
 	while(CAN_rx(can1, &can_msg, 0))
 	{
@@ -235,15 +266,16 @@ void receive_data_from_can(void)
 		{
 			status_geo = true;
 		}
-
+#if 0
 		if(status_sensor && status_motorio && status_bridge && status_geo)
 		{
 			dbc_encode_and_send_POWER_SYNC_ACK(&power_sync_ack);
 		}
-
+#endif
 		/* Command from App to start*/
 		if(can_msg.msg_id ==  START_CMD_APP_HDR.mid)
 		{
+			printf("RX START CMD\n");
 			car_state = START_CAR;
 			MOTORIO_DIRECTION_t motor_cmd;
 			motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
@@ -257,6 +289,7 @@ void receive_data_from_can(void)
 
 		else if(can_msg.msg_id == SENSOR_SONIC_HDR.mid)
 		{
+			LD.setNumber(0);
 			dbc_decode_SENSOR_SONIC(&sensor_data, can_msg.data.bytes, &can_msg_hdr);
 #ifdef DEBUG_PRINTF
 			printf("RX SENSOR DATA\n");
@@ -316,6 +349,7 @@ void receive_data_from_can(void)
 
 		else if(can_msg.msg_id == STOP_CMD_APP_HDR.mid)
 		{
+			printf("RX STOP CAR CMD\n");
 			car_state = STOP_CAR;
 			MOTORIO_DIRECTION_t motor_cmd;
 			motor_cmd.MOTORIO_DIRECTION_speed = STOP;
@@ -329,6 +363,16 @@ void receive_data_from_can(void)
 		}
 
 	}
+	miastatus = dbc_handle_mia_SENSOR_SONIC(&can_msg_sensor_data, SENSOR_MIA_TIMEOUT);
+	if(miastatus == true)
+	{
+#ifdef DEBUG_PRINTF
+		printf("Sensor Data MIA\n");
+#endif
+		LD.setNumber(99);
+		LOG_INFO("Sensor Data MIA Occurred\n");
+	}
+
 }
 
 /*

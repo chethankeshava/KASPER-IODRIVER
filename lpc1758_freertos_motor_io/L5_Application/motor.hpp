@@ -20,6 +20,18 @@ enum MOTOR_SPEED
 	NORMAL,
 	FAST
 };
+
+extern int s_left;
+extern int s_center;
+extern int s_right;
+extern int white_value,max_light_value,min_light_value,temp_count,rpm;
+
+extern float stop_dc;//   =   7.0;
+extern float slow_dc; //  =   6.35;
+extern float normal_dc;// =   6.28;
+extern float fast_dc;  // =   6.20;
+
+
 class MotorController : public SingletonTemplate<MotorController>
 {
 public:
@@ -44,6 +56,8 @@ void drive_car(void);
 void handle_motor_mia(void);
 bool rpm_sensor(void);
 void dcmotor_init(void);
+void rx_rpm(void);
+void drive_motor();
 
 #ifdef __cplusplus
 }

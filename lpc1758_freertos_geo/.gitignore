@@ -6,3 +6,8 @@ _build_mpu/*
 
 /_can_dbc/*.h
 /_build_with_dbc/
+/nm_dump/
+
+*.log
+*.xml
+*.dbf

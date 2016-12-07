@@ -56,6 +56,7 @@ bool period_init(void)
 	CAN_reset_bus(can1);
 	LD.setNumber(44);
 	//delay_ms(251); //250ms after powerup sensor is ready to receive commands
+	delay_ms(251); //250ms after powerup sensor is ready to receive commands
 	return true; // Must return true upon success
 }
 

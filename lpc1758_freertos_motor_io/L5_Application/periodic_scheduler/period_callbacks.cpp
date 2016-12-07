@@ -37,19 +37,25 @@
 #include "stdio.h"
 #include "motor.hpp"
 #include "lpc_pwm.hpp"
+#include "lcd.hpp"
 
 
-#define FW                           6.4
-#define DC_STOP                      7.0
 
+extern int white_patch_count;
+float latitide = 37.322993;
+float longitude = -121.883200;
+int white_value,max_light_value,min_light_value;
+int temp_count;
 /**
  * todo: avoid global variables.
  */
 int pwm_input = 6.4;
 int rpm;
+extern int tilt_y;
+extern int dc_pwm;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
-
+char lcdBuffer[128]={};
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
  * Minimum 1500 bytes are needed in order to write a debug file if the period tasks overrun.
@@ -80,9 +86,16 @@ bool period_init(void)
 
 	//RX PART
 	CAN_bypass_filter_accept_all_msgs();
-
 	CAN_reset_bus(can1);
-	//	printf("can bus initialized\n");
+
+
+	white_value = 2300;
+	max_light_value = 2000;
+	min_light_value = 7000;
+	temp_count = 0;
+
+	lcdInit();
+	lcdWriteObj(LCD_OBJ_FORM,LCD_FORM0_INDEX,0);
 	return true; // Must return true upon success
 }
 
@@ -103,90 +116,100 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 
-	printf("RPM = %d",rpm);
+	lcdWriteObj(LCD_OBJ_LED_DIGITS,LCD_LEDDIGIT_INDEX,white_patch_count);
+#if 1
+	//sprintf(lcdBuffer,"%d",white_patch_count);
+	//lcdWriteStr(LCD_FRONT_LEFT_SENSOR_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%d",s_left);
+	lcdWriteStr(LCD_FRONT_LEFT_SENSOR_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%d",s_center);
+	lcdWriteStr(LCD_FRONT_CENTER_SENSOR_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%d",s_right);
+	lcdWriteStr(LCD_FRONT_RIGHT_SENSOR_INDEX,lcdBuffer);
+	//sprintf(lcdBuffer,"%d",white_patch_count);
+	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%f",latitide);
+	lcdWriteStr(LCD_LATITUDE_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%f",longitude);
+	lcdWriteStr(LCD_LONGITUDE_INDEX,lcdBuffer);
+	//sprintf(lcdBuffer,"%d",white_patch_count);
+	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
+	//sprintf(lcdBuffer,"%d",white_patch_count);
+	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
 	//rpm_sensor();
-
+#endif
 	if(CAN_is_bus_off(can1))
 	{
 		puts(" Bus OFF ");
 		CAN_reset_bus(can1);
 	}
 
-	//	if(SW.getSwitch(1))
-	//	{
-	//	//	if(count%2)
-	//		//{
-	//			dc_accelerate(pwm_input);
-	//		//	printf("%d\n",pwm_input);
-	//			//if(pwm_input>5.7)
-	//				//pwm_input-=0.1;
-	//		//}
-	//
-	//	}
-	//	else if(SW.getSwitch(2))
-	//		{
-	//		dc_stop();
-	//		}
-	//	MOTORIO_HEARTBEAT_t motorio_heartbeat={0};
-	//motorio_heartbeat.MOTORIO_HEARTBEAT_data=1;
-	//	dbc_encode_and_send_MOTORIO_HEARTBEAT(&motorio_heartbeat);
+	//printf(" %d \n",white_patch_count);
+
+	white_patch_count=0;
+	//int   tilt_x = AS.getX();
+
+	//int   tilt_z = AS.getZ();
+	//printf("x-->%d  y-->%d z-->%d\n", tilt_x,tilt_y,tilt_z);
+
+
+
 }
 
 void period_10Hz(uint32_t count)
 {
 	drive_car();
-	if(rpm_sensor())
-		rpm++;
-	if(count%60==0)
-		rpm = 0;
+	drive_motor();
 
+	//printf(" %d ",count);
+	//sprintf(lcdBuffer,"%d",rpm);
+	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
 
-//	if(SW.getSwitch(1))
-//	{
-//		dc_accelerate(6.4);
-//	}
-//	else if(SW.getSwitch(2))
-//	{
-//		dc_stop();
-//	}
-//
+	if(SW.getSwitch(1))
+	{
+		dc_stop();
+	}
+	else if(SW.getSwitch(2))
+	{
+		//	puts("hey");
+		dc_accelerate(6.4);
+	}
+	else if(SW.getSwitch(3))
+	{
+		dc_accelerate(6.2);
+	}
+	else if(SW.getSwitch(4))
+	{
+		dc_accelerate(6.0);
+	}
+	//rx_rpm();
 
-	//	if(dbc_handle_mia_RESET(&reset_cmd_msg, 1))
-	//
-	//	{
-	//		LE.on(1);
-	//		reset_cmd_msg.RESET_data=RESET__MIA_MSG.RESET_data;
-	//
-	//		LE.on(1);
-	//
-	//	}
-	//	if(dbc_handle_mia_MOTORIO_DIRECTION(&mDirection_cmd_msg, 1))
-	//
-	//	{
-	//		LE.on(1);
-	//		mDirection_cmd_msg.MOTORIO_DIRECTION_direction=MOTORIO_DIRECTION__MIA_MSG.MOTORIO_DIRECTION_direction;
-	//
-	//
-	//		LE.on(1);
-	//		LD.setNumber(41);
-	//
-	//
-	//	}
-	//	LE.toggle(2);
 
 
 }
 
 void period_100Hz(uint32_t count)
 {
-	//LE.toggle(3);
+	LD.setNumber(white_patch_count);
+	if(rpm_sensor())
+//		rpm++;
+
+	if(count%500==0)
+	{
+		//	printf("RPM = %d\n",rpm);
+//		rpm = 0;
+	}
+	if(count%100==0)
+	{
+		white_value = (max_light_value + min_light_value)/2;
+		max_light_value = 0;
+		min_light_value = 2500;
+	}
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-	//rpm_sensor();
-
 	//LE.toggle(4);
 }
