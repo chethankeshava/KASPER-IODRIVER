@@ -1,4 +1,4 @@
-*
+/*
  * sensor.cpp
  *
  *  Created on: Nov 28, 2016
@@ -21,7 +21,7 @@ GPIO  RightSIG(P2_4); // Right SIG pin
 SENSOR_SONIC_t sensor_msg={0};
 
 void Sensor(){
-	i/**
+	/**
 	 * todo: If you are going to use delays here ensure that you do not run over in time.
 	 */
 	static int sen_count=0;
