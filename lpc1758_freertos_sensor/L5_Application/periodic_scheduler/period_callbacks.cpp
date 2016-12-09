@@ -55,6 +55,7 @@ bool period_init(void)
 	CAN_init(can1,100, 20, 20, 0, 0);
 	CAN_reset_bus(can1);
 	LD.setNumber(44);
+	//delay_ms(251); //250ms after powerup sensor is ready to receive commands
 	delay_ms(251); //250ms after powerup sensor is ready to receive commands
 	return true; // Must return true upon success
 }
@@ -86,6 +87,8 @@ void period_10Hz(uint32_t count)
 	//LE.toggle(2);
 	Sensor();
 	Transmit();
+	//Sensor();
+	//Transmit();
 }
 
 
