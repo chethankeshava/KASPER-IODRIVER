@@ -12,14 +12,66 @@
 #include "../../_can_dbc/generated_can.h"
 #include"stdio.h"
 #include "io.hpp"
+#include <string.h>
+#include <stdlib.h>
+#include <string.h>
+#define print_cordinate 1
+
 SemaphoreHandle_t Bluetooth_Lat_Lon_Semaphore = NULL;
 
-char Bluetooth_Buffer[96];
-char stored_Bluetooth_data[96];
+char Bluetooth_Buffer[512];
+char stored_Bluetooth_data[512];
+char Location_Buffer_temp[512];
+char send_cor_data[]= "loc,37.3352682,-121.881361$";
+char send_ACK[]= "ack$";
+char CONNECT[] = "connect";
+char START[] = "start";
+char STOP[] = "stop";
+char NULLPOINTER[] = "nullptr";
+float store_cor[512];
+int check_point_total;
+//char Send_these coordinate[] = 12.456789;
 Bluetooth_Received *Bluetooth_Rec;
 SemaphoreHandle_t BluetoothSemaphore = NULL;
+char send_end_line[6];
+//dbc_encode_and_send_BRIDGE_TOTAL_CHECKPOINT
 
 
+int indent(char *buffer)
+{
+    int count = 0;
+    char Start_Location[1];
+    char *token = NULL;
+    int counter=0;
+    float temp=0.0;
+
+    token = strtok((char *)buffer, ",");
+    if (! token)
+        return false;
+    Start_Location[0] = token[0];
+    check_point_total = int(Start_Location[0])-'0';
+    printf("check_point_total is %d\n",check_point_total);
+    count = check_point_total*2;
+    printf ("count = %d\n",count);
+
+    while(count != 0)
+    {
+        token = strtok (NULL, " ,");
+        temp = atof(token);
+        store_cor[counter]=temp;
+        counter++;
+        count--;
+    }
+
+#if print_cordinate
+    for(int j=0;j< (check_point_total*2);j++)
+    {
+         printf("store_cor[%d] = %f\n",j,store_cor[j]);
+    }
+#endif
+
+    return 0;
+}
 
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 {
@@ -41,10 +93,6 @@ void canBusErrorCallBackRx(uint32_t ibits)
 	u0_dbg_printf("ERRC = %#x, ERRBIT = %#x while %s\n", errc, errbit, rxtx);
 }
 
-/** todo: May want to give this function a more descriptive name.
- * uart_putchar is very generic and doesn't reflect that you are specifically
- * sending something via your bluetooth.
- */
 bool uart_putchar(char character)
 {
 	Uart2& Bluetooth_uart_2 = Uart2::getInstance();
@@ -67,8 +115,24 @@ bool Bluetooth_Enable::init(void)
 
 bool Bluetooth_Enable::run(void *p)
 {
+	//4,37.3352856722927,-121.88128352165222,37.33539123714316,-121.88132978975773,37.33547067726107,-121.88138745725155,37.3355319900463,-121.88143841922282,
 	Bluetooth_uart_2.gets(Bluetooth_Buffer, sizeof(Bluetooth_Buffer), portMAX_DELAY);
 	strcpy(stored_Bluetooth_data,Bluetooth_Buffer);
+	if(strcmp(stored_Bluetooth_data,CONNECT) == 0)
+	{
+		u0_dbg_printf("Sent send_cor_data \n",send_cor_data);
+		Bluetooth_uart_2.putline(send_cor_data, sizeof(send_cor_data));
+	}
+	else if((strcmp(stored_Bluetooth_data,START) == 0) || (strcmp(stored_Bluetooth_data,STOP) == 0) || (strcmp(stored_Bluetooth_data,NULLPOINTER) == 0))
+	{
+		// do nothing
+	}
+	else
+	{
+		strcpy(Location_Buffer_temp,Bluetooth_Buffer);
+		indent(Location_Buffer_temp);
+		Bluetooth_uart_2.putline(send_ACK, sizeof(send_ACK));
+	}
 	u0_dbg_printf("I have crossed the gets function %s\n",stored_Bluetooth_data);
 	return true;
 }
@@ -78,6 +142,28 @@ void Check_Start_STOP_Condition()
 {
 	START_CMD_APP_t START_CONDITION	=	{0};
 	STOP_CMD_APP_t STOP_CONDITION	=	{0};
+	//if(stored_Bluetooth_data[0] == '1')
+	if(strcmp(stored_Bluetooth_data,START) == 0)
+	{
+		START_CONDITION.START_CMD_APP_data = 1;
+		dbc_encode_and_send_START_CMD_APP(&START_CONDITION);
+		printf("sent start condition");
+		memset(stored_Bluetooth_data, 0, sizeof(stored_Bluetooth_data));
+	}
+	//if((stored_Bluetooth_data[0] == '0') && (stored_Bluetooth_data[1] == '1'))
+	if(strcmp(stored_Bluetooth_data,STOP) == 0)
+	{
+		STOP_CONDITION.STOP_CMD_APP_data = 1;
+		dbc_encode_and_send_STOP_CMD_APP(&STOP_CONDITION);
+		printf("sent stop condition");
+		memset(stored_Bluetooth_data, 0, sizeof(stored_Bluetooth_data));
+	}
+
+}
+#if 0
+void send_coordinates()
+{
+	BLUETOOTH_DATA_t BLUETOOTH_DATA_Location = {0};
 	if(stored_Bluetooth_data[0] == '1')
 	{
 		START_CONDITION.START_CMD_APP_data = 1;
@@ -85,7 +171,7 @@ void Check_Start_STOP_Condition()
 		printf("stored_Bluetooth_data[0]= '1' received\n");
 		stored_Bluetooth_data[0] = {0};
 	}
-	if(stored_Bluetooth_data[1] == '1')
+	if((stored_Bluetooth_data[0] == '0') && (stored_Bluetooth_data[1] == '1'))
 	{
 		STOP_CONDITION.STOP_CMD_APP_data = 1;
 		dbc_encode_and_send_STOP_CMD_APP(&STOP_CONDITION);
@@ -94,7 +180,7 @@ void Check_Start_STOP_Condition()
 	}
 
 }
-
+#endif
 void Can_Receive_ID_Task()
 {
 	can_msg_t can_msg_Info;
@@ -108,17 +194,6 @@ void Can_Receive_ID_Task()
 		can_msg_hdr.dlc = can_msg_Info.frame_fields.data_len;
 		can_msg_hdr.mid = can_msg_Info.msg_id;
 		//u0_dbg_printf("id :%d\n",can_msg_hdr.mid);
-
-/**
- * todo: You can use a switch statement here to speed up execution.
- * Using these if statements will force the CPU to evaluate every condition even
- * though can_msg_Info does not change.
- */
-
-/**
- * todo: Consider using the same message id for all these commands with different payload data.
- * In real systems you don't want to waste message id's needlessly.
- */
 		if(can_msg_Info.msg_id == STOP_CAR_HDR.mid)
 			printf("Case_STOP_CAR\n");
 		if(can_msg_Info.msg_id == RESET_HDR.mid)

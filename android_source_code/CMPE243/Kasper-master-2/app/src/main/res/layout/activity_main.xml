@@ -57,5 +57,10 @@
         android:text="@string/stop_car"
         android:textSize="15sp"
         android:layout_marginRight="@dimen/activity_horizontal_margin"/>
+    <!-- added on 11/29/2016 -->
+        <fragment android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="com.google.android.gms.maps.SupportMapFragment"/>
 
-</RelativeLayout>
+    </RelativeLayout>

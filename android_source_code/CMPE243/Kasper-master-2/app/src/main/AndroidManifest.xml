@@ -41,6 +41,12 @@
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"></activity>
+
+        //added this statement for using google api
+        <meta-data android:name="com.google.android.gms.version"
+        android:value="@integer/google_play_services_version" />
+        //added this statement for using google api
+
     </application>
 
 </manifest>
