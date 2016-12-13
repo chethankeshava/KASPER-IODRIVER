@@ -28,6 +28,7 @@ char CONNECT[] = "connect";
 char START[] = "start";
 char STOP[] = "stop";
 char NULLPOINTER[] = "nullptr";
+bool check_received = false;
 float store_cor[512];
 int check_point_total;
 //char Send_these coordinate[] = 12.456789;
@@ -35,7 +36,6 @@ Bluetooth_Received *Bluetooth_Rec;
 SemaphoreHandle_t BluetoothSemaphore = NULL;
 char send_end_line[6];
 //dbc_encode_and_send_BRIDGE_TOTAL_CHECKPOINT
-
 
 int indent(char *buffer)
 {
@@ -62,7 +62,6 @@ int indent(char *buffer)
         counter++;
         count--;
     }
-
 #if print_cordinate
     for(int j=0;j< (check_point_total*2);j++)
     {
@@ -73,6 +72,10 @@ int indent(char *buffer)
     return 0;
 }
 
+void Send_BLUETOOTH_DATA_t()
+{
+
+}
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 {
 	can_msg_t can_msg = { 0 };
@@ -131,7 +134,9 @@ bool Bluetooth_Enable::run(void *p)
 	{
 		strcpy(Location_Buffer_temp,Bluetooth_Buffer);
 		indent(Location_Buffer_temp);
+		Send_BLUETOOTH_DATA_t();
 		Bluetooth_uart_2.putline(send_ACK, sizeof(send_ACK));
+		check_received = true;
 	}
 	u0_dbg_printf("I have crossed the gets function %s\n",stored_Bluetooth_data);
 	return true;
@@ -142,6 +147,8 @@ void Check_Start_STOP_Condition()
 {
 	START_CMD_APP_t START_CONDITION	=	{0};
 	STOP_CMD_APP_t STOP_CONDITION	=	{0};
+	BLUETOOTH_DATA_t BLUETOOTH_DATA_Location = {0};
+	BRIDGE_TOTAL_CHECKPOINT_t BRIDGE_TOTAL_CHECKPOINT = {0};
 	//if(stored_Bluetooth_data[0] == '1')
 	if(strcmp(stored_Bluetooth_data,START) == 0)
 	{
@@ -151,12 +158,27 @@ void Check_Start_STOP_Condition()
 		memset(stored_Bluetooth_data, 0, sizeof(stored_Bluetooth_data));
 	}
 	//if((stored_Bluetooth_data[0] == '0') && (stored_Bluetooth_data[1] == '1'))
-	if(strcmp(stored_Bluetooth_data,STOP) == 0)
+	else if(strcmp(stored_Bluetooth_data,STOP) == 0)
 	{
 		STOP_CONDITION.STOP_CMD_APP_data = 1;
 		dbc_encode_and_send_STOP_CMD_APP(&STOP_CONDITION);
 		printf("sent stop condition");
 		memset(stored_Bluetooth_data, 0, sizeof(stored_Bluetooth_data));
+	}
+	else if(check_received == true)
+	{
+		int loop =0;
+		BRIDGE_TOTAL_CHECKPOINT.BRIDGE_TOTAL_CHECKPOINT_NUMBER = check_point_total;
+		dbc_encode_and_send_BRIDGE_TOTAL_CHECKPOINT(&BRIDGE_TOTAL_CHECKPOINT);
+		for(loop = 0; loop < (check_point_total*2) ;loop++)
+		{
+			u0_dbg_printf("LAT = %f\n",store_cor[loop]);
+			BLUETOOTH_DATA_Location.BLUETOOTH_DATA_LAT = store_cor[loop];
+			u0_dbg_printf("LON =  %f\n",store_cor[loop+1]);
+			BLUETOOTH_DATA_Location.BLUETOOTH_DATA_LON = store_cor[loop+1];
+			dbc_encode_and_send_BLUETOOTH_DATA(&BLUETOOTH_DATA_Location);
+		}
+		check_received = false;
 	}
 
 }
