@@ -38,7 +38,10 @@
 #include "motor.hpp"
 #include "lpc_pwm.hpp"
 #include "lcd.hpp"
+#include "gpio.hpp"
+#include "eint.h"
 
+int m_rpmCounter=0;
 
 
 extern int white_patch_count;
@@ -64,6 +67,11 @@ char lcdBuffer[128]={};
  */
 const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 
+void counter(void)
+{
+	//puts("hi");
+	m_rpmCounter++;
+}
 
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 {
@@ -83,6 +91,11 @@ bool period_init(void)
 	dcmotor_init();
 	CAN_init(can1, 100, 5, 5, 0, 0);
 	CAN_reset_bus(can1);
+
+	GPIO inputPin(P2_5);
+	inputPin.setAsInput();
+	inputPin.enablePullDown();
+	eint3_enable_port2(5, eint_rising_edge,counter);
 
 	//RX PART
 	CAN_bypass_filter_accept_all_msgs();
@@ -116,7 +129,7 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 
-	lcdWriteObj(LCD_OBJ_LED_DIGITS,LCD_LEDDIGIT_INDEX,white_patch_count);
+	lcdWriteObj(LCD_OBJ_LED_DIGITS,LCD_LEDDIGIT_INDEX,m_rpmCounter);
 #if 1
 	//sprintf(lcdBuffer,"%d",white_patch_count);
 	//lcdWriteStr(LCD_FRONT_LEFT_SENSOR_INDEX,lcdBuffer);
@@ -136,21 +149,24 @@ void period_1Hz(uint32_t count)
 	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
 	//sprintf(lcdBuffer,"%d",white_patch_count);
 	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
-	//rpm_sensor();
+
 #endif
+
 	if(CAN_is_bus_off(can1))
 	{
 		puts(" Bus OFF ");
+		LD.setNumber(0);
 		CAN_reset_bus(can1);
 	}
 
+	printf(" %d ",m_rpmCounter);
+	m_rpmCounter=0;
+
+
 	//printf(" %d \n",white_patch_count);
 
-	white_patch_count=0;
-	//int   tilt_x = AS.getX();
+//	white_patch_count=0;
 
-	//int   tilt_z = AS.getZ();
-	//printf("x-->%d  y-->%d z-->%d\n", tilt_x,tilt_y,tilt_z);
 
 
 
@@ -159,11 +175,7 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
 	drive_car();
-	drive_motor();
-
-	//printf(" %d ",count);
-	//sprintf(lcdBuffer,"%d",rpm);
-	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
+//	drive_with_feedback();
 
 	if(SW.getSwitch(1))
 	{
@@ -171,7 +183,7 @@ void period_10Hz(uint32_t count)
 	}
 	else if(SW.getSwitch(2))
 	{
-		//	puts("hey");
+		//		puts("hey");
 		dc_accelerate(6.4);
 	}
 	else if(SW.getSwitch(3))
@@ -180,31 +192,23 @@ void period_10Hz(uint32_t count)
 	}
 	else if(SW.getSwitch(4))
 	{
-		dc_accelerate(6.0);
+		dc_accelerate(7.6);
 	}
-	//rx_rpm();
-
-
-
 }
 
 void period_100Hz(uint32_t count)
 {
-	LD.setNumber(white_patch_count);
-	if(rpm_sensor())
-//		rpm++;
-
-	if(count%500==0)
-	{
-		//	printf("RPM = %d\n",rpm);
-//		rpm = 0;
-	}
-	if(count%100==0)
-	{
-		white_value = (max_light_value + min_light_value)/2;
-		max_light_value = 0;
-		min_light_value = 2500;
-	}
+	//	if(count%500==0)
+	//	{
+	//		//	printf("RPM = %d\n",rpm);
+	////		rpm = 0;
+	//	}
+	//	if(count%100==0)
+	//	{
+	//		white_value = (max_light_value + min_light_value)/2;
+	//		max_light_value = 0;
+	//		min_light_value = 2500;
+	//	}
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():

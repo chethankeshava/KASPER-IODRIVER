@@ -13,12 +13,20 @@ enum MOTOR_TURN
 	SLIGHT_RIGHT,
 	HARD_RIGHT,
 };
+
 enum MOTOR_SPEED
 {
 	STOP = 0,
 	SLOW,
 	NORMAL,
-	FAST
+	FAST,
+	REVERSE
+};
+
+enum MOTOR_DIRECTION
+{
+	FORWARD = 0,
+	BACK
 };
 
 extern int s_left;
@@ -57,7 +65,8 @@ void handle_motor_mia(void);
 bool rpm_sensor(void);
 void dcmotor_init(void);
 void rx_rpm(void);
-void drive_motor();
+//void drive_motor();
+void drive_with_feedback(void);
 
 #ifdef __cplusplus
 }
