@@ -22,7 +22,8 @@ SemaphoreHandle_t Bluetooth_Lat_Lon_Semaphore = NULL;
 char Bluetooth_Buffer[512];
 char stored_Bluetooth_data[512];
 char Location_Buffer_temp[512];
-char send_cor_data[]= "loc,37.3352682,-121.881361$";
+//char send_cor_data[]= "loc,37.3352682,-121.881361$";
+char send_cor_data[64];
 char send_ACK[]= "ack$";
 char CONNECT[] = "connect";
 char START[] = "start";
@@ -36,6 +37,20 @@ Bluetooth_Received *Bluetooth_Rec;
 SemaphoreHandle_t BluetoothSemaphore = NULL;
 char send_end_line[6];
 //dbc_encode_and_send_BRIDGE_TOTAL_CHECKPOINT
+GPS_LOCATION_t GPS_LOCATION_RECEIVE = {0};
+
+int Send_App_curr_loc(char *lat, char *lon)
+{
+    printf("%s \n",lat);
+    printf("%s \n",lon);
+    strcat(send_cor_data,"loc,");
+    strcat(send_cor_data,lat);
+    strcat(send_cor_data,",");
+    strcat(send_cor_data,lon);
+    strcat(send_cor_data,"$");
+    //printf("%s \n",send_cor_data);
+    return 0;
+}
 
 int indent(char *buffer)
 {
@@ -170,7 +185,7 @@ void Check_Start_STOP_Condition()
 		int loop =0;
 		BRIDGE_TOTAL_CHECKPOINT.BRIDGE_TOTAL_CHECKPOINT_NUMBER = check_point_total;
 		dbc_encode_and_send_BRIDGE_TOTAL_CHECKPOINT(&BRIDGE_TOTAL_CHECKPOINT);
-		for(loop = 0; loop < (check_point_total*2) ;loop++)
+		for(loop = 0; loop < (check_point_total*2) ;loop=loop+2)
 		{
 			u0_dbg_printf("LAT = %f\n",store_cor[loop]);
 			BLUETOOTH_DATA_Location.BLUETOOTH_DATA_LAT = store_cor[loop];
@@ -182,33 +197,13 @@ void Check_Start_STOP_Condition()
 	}
 
 }
-#if 0
-void send_coordinates()
-{
-	BLUETOOTH_DATA_t BLUETOOTH_DATA_Location = {0};
-	if(stored_Bluetooth_data[0] == '1')
-	{
-		START_CONDITION.START_CMD_APP_data = 1;
-		dbc_encode_and_send_START_CMD_APP(&START_CONDITION);
-		printf("stored_Bluetooth_data[0]= '1' received\n");
-		stored_Bluetooth_data[0] = {0};
-	}
-	if((stored_Bluetooth_data[0] == '0') && (stored_Bluetooth_data[1] == '1'))
-	{
-		STOP_CONDITION.STOP_CMD_APP_data = 1;
-		dbc_encode_and_send_STOP_CMD_APP(&STOP_CONDITION);
-		printf("stored_Bluetooth_data[1]= '1' received\n");
-		stored_Bluetooth_data[1] = {0};
-	}
 
-}
-#endif
 void Can_Receive_ID_Task()
 {
 	can_msg_t can_msg_Info;
 	RESET_t REST_Info = { 0 };
-	GPS_LOCATION_t GPS_LOCATION_RECEIVE = {0};
-
+    char lat[16];
+    char lon[16];
 	if (CAN_rx(can1, &can_msg_Info, 0))
 	{
 		LE.off(1);
@@ -230,7 +225,10 @@ void Can_Receive_ID_Task()
 		{
 			dbc_decode_GPS_LOCATION(&GPS_LOCATION_RECEIVE, can_msg_Info.data.bytes, &can_msg_hdr);
 			printf("GPS_LOCATION_RECEIVE\n");
-			//u0_dbg_printf("Latitude: %f ,Longitude: %f \n",GPS_LOCATION_DATA.GPS_LOCATION_latitude,GPS_LOCATION_DATA.GPS_LOCATION_longitude);
+			sprintf(lat,"%f",GPS_LOCATION_RECEIVE.GPS_LOCATION_latitude);
+			sprintf(lon,"%f",GPS_LOCATION_RECEIVE.GPS_LOCATION_longitude);
+		    Send_App_curr_loc(lat,lon);
+			//u0_dbg_printf("Latitude: %f ,Longitude: %f \n",GPS_LOCATION_RECEIVE.GPS_LOCATION_latitude,GPS_LOCATION_RECEIVE.GPS_LOCATION_longitude);
 		}
 		if(dbc_handle_mia_RESET(&REST_Info, 1))
 		{
