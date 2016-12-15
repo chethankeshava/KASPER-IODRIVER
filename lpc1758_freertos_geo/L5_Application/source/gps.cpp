@@ -30,11 +30,14 @@
 
 char gpsData[GPS_DATA_LEN];
 char gBuffer[256];							/// Global buffer for received data
-
+char rxBuff[256]={};
+char gpsStr[256]={};
 int32_t latitude_fixed, longitude_fixed;
 float latitudeDegrees, longitudeDegrees;
 float geoidheight, altitude;
-
+float g_distance=300.00;
+extern bool newChkPointRecvd;
+bool recvdTrueGPSData =false;
 /**********************************************************************************************************************
  *
  *********************************************************************************************************************/
@@ -71,6 +74,7 @@ bool geoTask::parseGpsData(char *buffer)
 	float longitude =0;
 	float latitude_min =0.0;
 	float longitude_min =0.0;
+	//u0_dbg_printf("%s\n",buffer);
 
 	tok = strtok((char *)buffer, ",");
 	if (! tok)
@@ -86,13 +90,13 @@ bool geoTask::parseGpsData(char *buffer)
 		if (!tok)
 			return false;
 
-		if(!strcmp(tok,"V"))
+		if(strcmp(tok,"A"))
 		{
-			u0_dbg_printf("void(Invalid) data\n");
-			curLatitude = 0.0;
-			curLongitude = 0.0;
+			//u0_dbg_printf("void(Invalid) data\n");
 			return true;
 		}
+
+		recvdTrueGPSData = true;
 
 		// Parsing Latitude
 		tok = strtok(NULL, ",");
@@ -105,7 +109,7 @@ bool geoTask::parseGpsData(char *buffer)
 		latitude_min /= 60;
 		latitude = latitude + latitude_min;
 		curLatitude = latitude;
-		u0_dbg_printf("%f\n",latitude);
+		//u0_dbg_printf("%f\n",curLatitude);
 
 		tok = strtok(NULL, ",");
 		if (!tok)
@@ -127,14 +131,14 @@ bool geoTask::parseGpsData(char *buffer)
 		tok = strtok(NULL, ",");
 		if (!tok)
 			return false;
-		if(!strcmp(tok,"W"))
+
+		//if(!strcmp(tok,"W"))
 		{
 			longitude *= -1;
 		}
 
 		curLongitude = longitude;
-		u0_dbg_printf("%f\n",longitude);
-
+		u0_dbg_printf("%f,%f\n",curLatitude,curLongitude);
 	}
 	return true;
 }
@@ -145,8 +149,8 @@ bool geoTask::parseGpsData(char *buffer)
 **************************************************************************************************/
 void gpsSetRMCOnlyOutput()
 {
-	char gprmcOnly[] = "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n";
-	char frequency[] =  "$PMTK220,100*2F\r\n";
+	char gprmcOnly[] = "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n";		// Only GPRMC
+	char frequency[] =  "$PMTK220,100*2F\r\n";										// 10Hz
 
 	int i = 0;
 
@@ -165,13 +169,6 @@ void gpsSetRMCOnlyOutput()
 	}
 }
 
-/**************************************************************************************************
-*
-**************************************************************************************************/
-geoTask::geoTask() : gpsUart(Uart2::getInstance())
-{
-	/* Nothing to init */
-}
 
 /**************************************************************************************************
 *
@@ -188,7 +185,7 @@ bool geoTask::init(void)
 		gpsPutch(gprmcOnly[i]);
 		delay_ms(1);
 	}
-
+#if 0
 	i =0;
 
 	for( i = 0; frequency[i] != '\0'; i++)
@@ -196,7 +193,7 @@ bool geoTask::init(void)
 		gpsPutch(frequency[i]);
 		delay_ms(1);
 	}
-
+#endif
 	return true;
 }
 
@@ -205,12 +202,11 @@ bool geoTask::init(void)
 **************************************************************************************************/
 bool geoTask::readGpsData()
 {
-	char rxBuff[256]={};
-	char gpsStr[256]={};
+
 	int i=0;
 	char c=0;
-
-	while(gpsUart.getChar(&c, portMAX_DELAY))
+	gpsUart.flush();
+	while(gpsUart.getChar(&c, 0))
 	{
 		if ('\r' != c && '\n' != c)
 		{
@@ -225,8 +221,9 @@ bool geoTask::readGpsData()
 	rxBuff[i++] = '\0';
 
 	strncpy(gpsStr,rxBuff,sizeof(rxBuff));
-
 	parseGpsData(gpsStr);
+	//u0_dbg_printf("%s\n",rxBuff);
+	//gpsUart.flush();
 	return true;
 }
 void geoTask::setChkPointData(float chkLatitude,float chkLongitude)
@@ -234,21 +231,30 @@ void geoTask::setChkPointData(float chkLatitude,float chkLongitude)
 	chkPointLatitude = chkLatitude;
 	chkPointLongitude = chkLongitude;
 }
+geoTask::geoTask() : gpsUart(Uart2::getInstance())
+{
+	/* Nothing to init */
+}
 
 /**************************************************************************************************
 *
 **************************************************************************************************/
 void geoTask::sendGpsData()
 {
-	GPS_LOCATION_t geoGpsData = { 0 };
+	if(recvdTrueGPSData == true)
+	{
+		GPS_LOCATION_t geoGpsData = { 0 };
+		//readGpsData();
+		//curLatitude = 37.335187;
+		//curLongitude = -121.881071;
+		geoGpsData.GPS_LOCATION_latitude = curLatitude;
+		geoGpsData.GPS_LOCATION_longitude = curLongitude;
 
-	readGpsData();
+		u0_dbg_printf("lat : %f lon: %f\n",curLatitude,curLongitude);
 
-	geoGpsData.GPS_LOCATION_latitude = curLatitude;
-	geoGpsData.GPS_LOCATION_longitude = curLongitude;
-
-	// This function will encode the CAN data bytes, and send the CAN msg using dbc_app_send_can_msg()
-	dbc_encode_and_send_GPS_LOCATION(&geoGpsData);
+		// This function will encode the CAN data bytes, and send the CAN msg using dbc_app_send_can_msg()
+		dbc_encode_and_send_GPS_LOCATION(&geoGpsData);
+	}
 }
 
 /**********************************************************************************************************************
@@ -267,12 +273,14 @@ void geoTask::calculateBearing()
 	float x = cos(lat1) * sin(lat2) - sin(lat1)* cos(lat2) * cos(lon_diff);
 	float brng = atan2(y,x);
 
-	bearing = radiansToDegrees(brng);
+	brng = radiansToDegrees(brng) ;
 
-	if( bearing < 0)
+	if( brng < 0)
 	{
-		bearing = 360 + bearing;
+		brng = 360 + brng;
 	}
+
+	bearing = brng;
 }
 
 /**********************************************************************************************************************
@@ -294,6 +302,16 @@ void geoTask::calculateDistance()
     float d = EARTH_RADIUS_KM * c * 1000;
     //d=d/1000;									// Convert to kilometers
     distance = d;
+#if 0
+    // For testing
+    if(g_distance < 0)
+    {
+	   g_distance = 300;
+    }
+    g_distance -= 30;
+
+    distance = g_distance;
+#endif
 }
 
 /**************************************************************************************************
@@ -304,14 +322,22 @@ void geoTask::sendCompassData()
 	COMPASS_DATA_t geoCompassData = { 0 };
 
 	calculateDistance();
-	calculateBearing();
-	compassi2c.getHeading(&heading);
 
+	if(newChkPointRecvd)
+	{
+		calculateBearing();
+		newChkPointRecvd = false;
+	}
+
+	//compassi2c.getHeading(&heading);
+	LSM.getHeading(&heading);
 	geoCompassData.COMPASS_DATA_bearing = bearing;
 	geoCompassData.COMPASS_DATA_heading = heading;
 	geoCompassData.COMPASS_DATA_speed	= speed;
 	geoCompassData.COMPASS_DATA_distance = distance;
 
+	u0_dbg_printf("head: %f,bearing:%f,Dis:%.2f\n",heading,bearing,distance);
 	// This function will encode the CAN data bytes, and send the CAN msg using dbc_app_send_can_msg()
 	dbc_encode_and_send_COMPASS_DATA(&geoCompassData);
+
 }

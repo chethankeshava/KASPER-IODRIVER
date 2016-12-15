@@ -18,6 +18,7 @@ class geoTask
 {
     public:
 		geoTask();
+
         bool init(void);
         bool readGpsData();
         void sendGpsData();
@@ -31,13 +32,13 @@ class geoTask
 		Uart2 &gpsUart;
 		static const int rx_q = 100;
 		static const int tx_q = 100;
-		float curLatitude =0.0;
-		float curLongitude =0.0;
-		float chkPointLatitude =0.0;
-		float chkPointLongitude =0.0;
+		float curLatitude = 37.335187;
+		float curLongitude = -121.881071;
+		float chkPointLatitude = 37.335187;
+		float chkPointLongitude = -121.881071;
 		float bearing=0.0;
 		float heading=0.0;
-		uint16_t distance=0;
+		float distance=0.0;
 		uint8_t speed=0;
 		//compass compassObject;
 };

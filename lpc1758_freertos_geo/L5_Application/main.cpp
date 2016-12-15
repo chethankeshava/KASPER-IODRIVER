@@ -131,8 +131,8 @@ int main(void)
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     //scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
-
-	#if 1
+	u0_dbg_printf("Hello\n");
+	#if 0
 	const bool run_1Khz = false;
 	scheduler_add_task(new periodicSchedulerTask(run_1Khz));
 	#endif
@@ -141,7 +141,7 @@ int main(void)
 	//scheduler_start();
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
-    #if 0
+    #if 1
     const bool run_1Khz = false;
     scheduler_add_task(new periodicSchedulerTask(run_1Khz));
     #endif
