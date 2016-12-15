@@ -24,6 +24,7 @@
 #define DEBUG_START_STOP 1
 #define DEBUG_CRITICAL 1
 #define CAR_STATE 1
+//#define DEBUG_REVERSE_ENABLED 1
 
 SENSOR_SONIC_t can_msg_sensor_data = {0};
 POWER_SYNC_ACK_t power_sync_ack = {0};
@@ -70,6 +71,7 @@ status_t init_can_master(void)
 	return status;
 }
 
+
 /*
  * obstacle_avoidance_and_drive:
  * Functionality: Algorithm to control the motor based on the sensor values.
@@ -79,9 +81,8 @@ status_t init_can_master(void)
  */
 status_t avoid_obstacle_and_drive(void)
 {
-	status_t status = true;
+	status_t status = false;
 	MOTORIO_DIRECTION_t motor_cmd = {0};
-	static MOTORIO_DIRECTION_t prev_motor_cmd = {0};
 
 	uint16_t sensor_left = sensor_data.SENSORS_SONIC_front_left;
 	uint16_t sensor_center = sensor_data.SENSORS_SONIC_front_center;
@@ -96,10 +97,10 @@ status_t avoid_obstacle_and_drive(void)
 
 
 	// TODO: As Calvin has rightly commented, we need to handle backing up
-#if 0
+#if DEBUG_REVERSE_ENABLED
 	if((centre_range == NEAR) && (back_range != FAR))
 	{
-		motor_cmd.MOTORIO_DIRECTION_speed s= STOP;
+		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
 	}
@@ -111,24 +112,42 @@ status_t avoid_obstacle_and_drive(void)
 	}
 	else if((centre_range == NEAR) && (back_range == FAR))
 	{
-		motor_cmd.MOTORIO_DIRECTION_speed = REVERSE;
-		motor_cmd.MOTORIO_DIRECTION_direction = BACK;
-		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		if(sensor_left < sensor_right)
+		{
+			motor_cmd.MOTORIO_DIRECTION_speed = REVERSE;
+			motor_cmd.MOTORIO_DIRECTION_direction = BACK;
+			motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_LEFT;
+		}
+		else
+		{
+			motor_cmd.MOTORIO_DIRECTION_speed = REVERSE;
+			motor_cmd.MOTORIO_DIRECTION_direction = BACK;
+			motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_RIGHT;
+		}
 	}
 	else if((ls_range == NEAR) && (rs_range == NEAR) && (back_range == FAR))
 	{
-		motor_cmd.MOTORIO_DIRECTION_speed = REVERSE;
-		motor_cmd.MOTORIO_DIRECTION_direction = BACK;
-		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		if(sensor_left < sensor_right)
+		{
+			motor_cmd.MOTORIO_DIRECTION_speed = REVERSE;
+			motor_cmd.MOTORIO_DIRECTION_direction = BACK;
+			motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_LEFT;
+		}
+		else
+		{
+			motor_cmd.MOTORIO_DIRECTION_speed = REVERSE;
+			motor_cmd.MOTORIO_DIRECTION_direction = BACK;
+			motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_RIGHT;
+		}
 	}
-#endif
-#if 1
+#else
 	if((centre_range == NEAR))
 	{
 		status = false;
 		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
 	else if((ls_range == NEAR) && (rs_range == NEAR))
 	{
@@ -136,55 +155,56 @@ status_t avoid_obstacle_and_drive(void)
 		motor_cmd.MOTORIO_DIRECTION_speed = STOP;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
-#endif
 	else if((ls_range == MEDIUM) && (centre_range != NEAR) && (rs_range == FAR))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_RIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
 	else if((ls_range == FAR) && (centre_range != NEAR) && (rs_range == MEDIUM))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_LEFT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
 	else if((ls_range == NEAR) && (rs_range != NEAR))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = HARD_RIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
 	else if((ls_range != NEAR) && (rs_range == NEAR))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = HARD_LEFT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
 	else if((ls_range == MEDIUM) || (centre_range == MEDIUM) || (rs_range == MEDIUM))
 	{
 		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
 		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
 
 	else
 	{
-		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
-		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
-		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		status = true;
 	}
 
 
-
+#endif
 #ifdef DEBUG_SENSOR
 	printf("\nSensor value: L: %u | C: %u | R: %u | B: %u", sensor_left, sensor_center, sensor_right, sensor_back);
 	printf("\nMotor value: Speed = %d | Direction = %d | Turn = %d",motor_cmd.MOTORIO_DIRECTION_speed, motor_cmd.MOTORIO_DIRECTION_direction, motor_cmd.MOTORIO_DIRECTION_turn);
 #endif
 
-	dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
-	prev_motor_cmd = motor_cmd;
 
 	return status;
 }
@@ -271,51 +291,90 @@ void drive_car()
 void navigate_car_based_on_bearing(float car_direction)
 {
 	MOTORIO_DIRECTION_t motor_cmd = {0};
-
+#ifdef DEBUG_GEO_NAV_DIR
+	printf("\n Navigation car_direction: %f",car_direction);
+#endif
 	if(car_direction < 0)
 	{
 		car_direction += 360;
 	}
 
-	if((car_direction > 45) & (car_direction < 90))
+	if((car_direction > 15) & (car_direction <= 90))
 	{
 #ifdef DEBUG_GEO_NAV_DIR
 		printf("\n Navigation: Slight Right");
 #endif
 		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
-		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_LEFT;
+		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_RIGHT; 
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
-	else if((car_direction > 90) & (car_direction < 180))
+	else if((car_direction > 90) & (car_direction <= 180))
 	{
 #ifdef DEBUG_GEO_NAV_DIR
 		printf("\n Navigation: Hard Right");
 #endif
 		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
-		motor_cmd.MOTORIO_DIRECTION_turn = HARD_LEFT;
+		motor_cmd.MOTORIO_DIRECTION_turn = HARD_RIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
-	else if((car_direction > 180) & (car_direction < 270))
+	else if((car_direction > 180) & (car_direction <= 270))
 	{
 #ifdef DEBUG_GEO_NAV_DIR
 		printf("\n Navigation: Hard Left");
 #endif
 		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
-		motor_cmd.MOTORIO_DIRECTION_turn = HARD_RIGHT;
+		motor_cmd.MOTORIO_DIRECTION_turn = HARD_LEFT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
-	else if((car_direction > 270) & (car_direction < 360))
+	else if((car_direction > 270) & (car_direction <= 345))
 	{
 #ifdef DEBUG_GEO_NAV_DIR
 		printf("\n Navigation: Slight Left");
 #endif
 		motor_cmd.MOTORIO_DIRECTION_speed = SLOW;
 		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
-		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_RIGHT;
+		motor_cmd.MOTORIO_DIRECTION_turn = SLIGHT_LEFT; 
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
 	}
 
-	dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
+	else
+	{
+		motor_cmd.MOTORIO_DIRECTION_speed = NORMAL;
+		motor_cmd.MOTORIO_DIRECTION_direction = FORWARD;
+		motor_cmd.MOTORIO_DIRECTION_turn = STRAIGHT;
+		dbc_encode_and_send_MOTORIO_DIRECTION(&motor_cmd);
+	}
 }
+
+
+/*
+ * Test code for Geo functionality
+ * TODO: Remove post testing
+ */
+bool flag_first_time = true;
+void test_geo()
+{
+
+	if(flag_first_time == true)
+	{
+		printf("Populate Checkpoints\n");
+		checkpoints_data.latitude[0] = 37.335777;
+		checkpoints_data.longitude[0] =-121.881636;
+
+		checkpoints_data.latitude[1] = 37.335611;
+		checkpoints_data.longitude[1] = -121.881510;
+
+		checkpoints_data.total_points = 2;
+		car_state = SEND_CHECKPOINTS;
+		flag_first_time = false;
+		obstacle_avoidance_state = true;
+	}
+
+}
+
 
 
 /*
@@ -331,6 +390,8 @@ void receive_data_from_can(void)
 	can_msg_t can_msg;
 	dbc_msg_hdr_t can_msg_hdr;
 	status_t miastatus = false;
+
+	//test_geo();
 
 	while(CAN_rx(can1, &can_msg, 0))
 	{
