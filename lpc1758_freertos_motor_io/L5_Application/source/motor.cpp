@@ -16,20 +16,20 @@
 can_msg_t can_msg2;
 
 MOTORIO_DIRECTION_t mDirection_cmd_msg = { 0 };
+SENSOR_SONIC_t s_cmd_msg = { 0 };
+COMPASS_DATA_t c_cmd_msg = {0};
+GPS_LOCATION_t g_cmd_msg={0};
+
 
 const uint32_t            MOTORIO_DIRECTION__MIA_MS = 300;
 const MOTORIO_DIRECTION_t      MOTORIO_DIRECTION__MIA_MSG = { 0 };
 
-extern int m_rpmCounter;
 
-SENSOR_SONIC_t s_cmd_msg = { 0 };
-int tilt_y =0;
-
-#define H_LEFT                           8.7   //9.0 old one is 8.7
-#define S_LEFT                           8.0
-#define H_RIGHT                          5.5   //5.7
+#define H_LEFT                           9.0   //9.0 old one is 8.7
+#define S_LEFT                           8.7
+#define H_RIGHT                          5.7   //5.7
 #define S_RIGHT                          6.5
-#define STRAIGHT_STEER                   7.5
+#define STRAIGHT_STEER                   7.8   //7.5
 
 #define DC_STOP                          7.1
 #define DC_SLOW                    		 6.4
@@ -39,38 +39,27 @@ int tilt_y =0;
 #define DESIRED_COUNT_SLOW				 8
 #define DESIRED_COUNT_NORMAL			 11
 
-
-static bool recvd_white = false;
-//static bool white_patch_flag = false;
-static int check_time = 0;
-
-int light_threshold = 1900;
-
-//char speed_flag;
-
-
-
-#define RPM_DEAD_SECOND_COUNT             4
-#define SPEED_VAR_FACTOR                 0.05
-
-int white_patch_count;
-float stop_dc   =   7.0;
-float slow_dc   =   6.35;
-float normal_dc =   6.28;
-float fast_dc   =   6.20;
 float dc_pwm 	=	6.6;
-
-
-
-
+extern int m_rpmCounter;
+int tilt_y =0;
+int speed_temp;
 /**
  * todo: avoid using globals. You can use semaphores or make this interrupt based.
  */
 bool stop_flag = false;
-
 int s_left=0;
 int s_center=0;
 int s_right=0;
+float distance = 0;
+float bearing=0;
+float heading=0;
+float latitide=0;
+float longitude=0;
+
+
+
+
+
 
 MotorController::MotorController(): driveMotor(PWM::pwm2,54), steerMotor(PWM::pwm1,54)
 {
@@ -106,7 +95,6 @@ void drive_car(void)
 
 #if 1
 		//printf("mid--> %d\n ",can_msg2.msg_id);
-
 		if(can_msg2.msg_id== SENSOR_SONIC_HDR.mid)
 		{
 			dbc_decode_SENSOR_SONIC(&s_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
@@ -117,13 +105,26 @@ void drive_car(void)
 			//			printf("  c-->%d",s_center);
 			//			printf("  r-->%d\n",s_right);
 		}
+		if(can_msg2.msg_id == COMPASS_DATA_HDR.mid)
+		{
+			dbc_decode_COMPASS_DATA(&c_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
+			distance = c_cmd_msg.COMPASS_DATA_distance;
+			bearing=c_cmd_msg.COMPASS_DATA_bearing;
+			heading=c_cmd_msg.COMPASS_DATA_heading;
+		}
+		if(can_msg2.msg_id == GPS_LOCATION_HDR.mid)
+		{
+			dbc_decode_GPS_LOCATION(&g_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
+			latitide = g_cmd_msg.GPS_LOCATION_latitude;
+			longitude=g_cmd_msg.GPS_LOCATION_longitude;
+		}
 
 		if(can_msg2.msg_id == MOTORIO_DIRECTION_HDR.mid)
 		{
 			dbc_decode_MOTORIO_DIRECTION(&mDirection_cmd_msg, can_msg2.data.bytes, &can_msg_hdr);
 
-			//			printf("t--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
-//			printf("s--> %d\n",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
+			//	printf(" %d ",mDirection_cmd_msg.MOTORIO_DIRECTION_turn);
+			//printf(" %d ",mDirection_cmd_msg.MOTORIO_DIRECTION_speed);
 
 			if(mDirection_cmd_msg.MOTORIO_DIRECTION_turn==SLIGHT_LEFT)
 			{
@@ -148,18 +149,25 @@ void drive_car(void)
 
 			if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == STOP)
 			{
+				speed_temp=STOP;
 				dc_stop();
-				dc_pwm = 6.3;
+				//dc_pwm = 6.3;
 			}
 			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == SLOW)
 			{
+				speed_temp=SLOW;
+
 				//dc_pwm = DC_SLOW;
 				drive_with_feedback();
+				//	dc_pwm=6.4;
 				dc_accelerate(dc_pwm);
 			}
 			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == NORMAL)
 			{
+				speed_temp=NORMAL;
+
 				drive_with_feedback();
+				//	dc_pwm=6.4;
 				dc_accelerate(dc_pwm);
 			}
 			else if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == REVERSE)
@@ -214,7 +222,7 @@ void dcmotor_init(void)
 	delay_ms(20);
 }
 
-
+#if 0
 bool rpm_sensor(void)
 {
 	static int reading = 0;
@@ -245,6 +253,7 @@ bool rpm_sensor(void)
 		min_light_value = reading;
 
 }
+#endif
 
 void drive_with_feedback(void)
 {
@@ -255,65 +264,43 @@ void drive_with_feedback(void)
 	if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == SLOW)
 	{
 
-		if(m_rpmCounter>=5 && m_rpmCounter<=7)
+		if(m_rpmCounter>=1 && m_rpmCounter<=2)
 		{
-			dc_pwm+=0.05;
+			dc_pwm=6.6;
 		}
-		if(m_rpmCounter>7 && dc_pwm<6.9)
+		if(m_rpmCounter>3 && dc_pwm<6.9)
 		{
-			dc_pwm+=0.1;            //slow
+			dc_pwm+=0.2;            //slow
 		}
-		if(m_rpmCounter < 5 && dc_pwm>6.2)
+		if(m_rpmCounter > 3 && dc_pwm>6.3)
 		{
 			dc_pwm-=0.01;			//fast
 		}
-		//		if(m_rpmCounter > 4)    //straight level
-		//			dc_pwm = 6.6;
-		//		else
-		//		{
-		//			if(m_rpmCounter < 4 && dc_pwm > 6.2) // uphill negative-
-		//				dc_pwm-= 0.02;
-		//			if(m_rpmCounter >= 4 && dc_pwm<=6.7) //downhill
-		//				dc_pwm = 6.7;//dc_pwm+= 0.1;
-		//			if(dc_pwm<=6)
-		//				dc_pwm = 7.0;
-		//		}
+		printf(" %d ",m_rpmCounter);
+		m_rpmCounter=0;
+
 	}
 
 	if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == NORMAL)
 	{
 		if(m_rpmCounter>=5 && m_rpmCounter<=7)
 		{
-			dc_pwm+=0.02;
+			dc_pwm+=0.1;
 		}
-		if(m_rpmCounter>7 && dc_pwm<6.9)
+		if(m_rpmCounter>9 && dc_pwm<6.9)
 		{
 			dc_pwm+=0.1;            //slow
 		}
-		if(m_rpmCounter < 5 && dc_pwm>6.2)
+		if(m_rpmCounter < 5 && dc_pwm>6.3)
 		{
 			dc_pwm-=0.01;			//fast
 		}
-
-
-
-		//		if(m_rpmCounter > 4)    //straight level
-		//			dc_pwm = 6.6;
-		//		else
-		//		{
-		//			if(m_rpmCounter < 4 && dc_pwm > 6.2) // uphill negative-
-		//				dc_pwm-= 0.02;
-		//			if(m_rpmCounter >= 4 && dc_pwm<=6.7) //downhill
-		//				dc_pwm = 6.7;//dc_pwm+= 0.1;
-		//			if(dc_pwm<=6)
-		//				dc_pwm = 7.0;
-		//		}
-		//	printf("n-->%f  %d v\n",dc_pwm,tilt_y);
+		printf(" %d ",m_rpmCounter);
+		m_rpmCounter=0;
 	}
 	if(mDirection_cmd_msg.MOTORIO_DIRECTION_speed == REVERSE)
 	{
 		dc_pwm=7.0;
-		//	printf(" rev-->%f ",dc_pwm);
 	}
 
 }
