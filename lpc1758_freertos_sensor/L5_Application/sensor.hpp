@@ -21,12 +21,12 @@
 extern GPIO  LeftSIG;   // left SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
 extern GPIO CenterSIG; // Center SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
 extern GPIO RightSIG; // Right SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
-//extern GPIO BackSIG;  //Back SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
+extern GPIO BackSIG;  //Back SIGpin USE EXTERN so they wont be redeclared every time "sensor.hpp" is called!
 
 void Sensor_left(void);
 void Sensor_center(void);
 void Sensor_right(void);
-//void Sensor_back(void);
+void Sensor_back(void);
 
 void Sensor(void);
 void Transmit(void);

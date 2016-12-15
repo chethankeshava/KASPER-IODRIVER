@@ -12,6 +12,9 @@
 
 typedef bool status_t;
 
+#define DIST_TO_CHECKPOINT 10 // in meters
+#define DIST_TO_STOP 2
+
 /*
  * MOTOR_SPEED
  * Type: enum
@@ -22,7 +25,8 @@ enum MOTOR_SPEED{
 	STOP = 0,
 	SLOW,
 	NORMAL,
-	FAST
+	FAST,
+	REVERSE
 };
 
 /*
@@ -47,7 +51,7 @@ enum MOTOR_TURN{
  */
 enum MOTOR_DIRECTION{
 	FORWARD = 0,
-	REVERSE
+	BACK
 };
 
 // TODO: Associate sensor readings with appropriate range enums
@@ -111,4 +115,7 @@ void test_motor();
 void drive_car(void);
 
 void receive_data_from_can(void);
+
+void navigate_car_based_on_bearing(float car_direction);
+
 #endif

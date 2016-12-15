@@ -105,6 +105,13 @@ import android.os.ParcelUuid;
 
 import static android.net.Uri.parse;
 
+// added for draw line
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.PolylineOptions;
+
 public class FirstActivity extends ListActivity {
 
     private static final int REQUEST_COARSE_LOCATION = 900 ;
@@ -166,13 +173,7 @@ public class FirstActivity extends ListActivity {
 
     // The Below function is called when the TURN ON button is pressed.
     public void Turn_ON_button(View view) {
-        /* //testing google API working
-    Intent intent = null, chooser = null;
-        intent = new Intent(android.content.Intent.ACTION_VIEW);
-        intent.setData(Uri.parse("geo:37.3403980,-121.8944450"));
-        chooser = Intent.createChooser(intent, "Launch Map");
-        startActivity(chooser);
-        */
+
         if (!BA.isEnabled()) {
             Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(turnOn, 0);
@@ -180,7 +181,15 @@ public class FirstActivity extends ListActivity {
         } else {
             Toast.makeText(getApplicationContext(), "Already On", Toast.LENGTH_LONG).show();
         }
-    }
+
+        //testing google API working
+        Intent intent = null, chooser = null;
+        intent = new Intent(android.content.Intent.ACTION_VIEW);
+        intent.setData(Uri.parse("geo:37.3403980,-121.8944450"));
+        chooser = Intent.createChooser(intent, "Launch Map");
+        startActivity(chooser);
+        }
+
 
     // The Below function is called when the TURN OFF button is pressed.
     public void Turn_OFF_button(View view) {
