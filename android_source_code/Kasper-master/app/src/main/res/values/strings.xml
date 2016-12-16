@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Kasper</string>
+
+    <string name="bluetooth_heading">Bluetooth 1.0</string>
+    <string name="kasper_heading">Kasper</string>
+    <string name="turn_off">Turn OFF</string>
+    <string name="turn_on">Turn ON</string>
+    <string name="get_visible">Get Visible</string>
+    <string name="list_devices">List Devices</string>
+    <string name="find_devices">Find Devices</string>
+    <string name="paired_devices">Paired Devices:</string>
+    <string name="available_devices">Available Devices:</string>
+
+    <string name="not_connected">You are not connected to a device</string>
+    <string name="bt_not_enabled_leaving">Bluetooth was not enabled. Leaving Bluetooth Chat.</string>
+    <string name="title_connecting">connecting...</string>
+    <string name="title_connected_to">connected to </string>
+    <string name="title_not_connected">not connected</string>
+
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyAxouTnNCRMv4i9sLvpA9Cc3MUnDqFcDrg</string>
+</resources>

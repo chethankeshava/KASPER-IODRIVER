@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.infinity.test.MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/deviceName"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:textSize="20sp"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:id="@+id/box"
+        android:layout_below="@+id/deviceName"
+        android:layout_marginTop="50dp"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/box"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:text="Send"
+        android:id="@+id/send"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:id="@+id/result"
+        android:layout_below="@id/send"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:textSize="20sp"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/result"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:text="Connect"
+        android:id="@+id/connect"/>
+
+
+</RelativeLayout>
