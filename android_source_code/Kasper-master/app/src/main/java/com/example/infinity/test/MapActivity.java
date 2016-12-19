@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
@@ -39,6 +40,7 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import com.example.infinity.test.LatLong;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MapActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -193,13 +195,25 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
 
                 if(navigate.size()>0) {
 
-                    mConnectedThread.write(navigate.size()+",");
-                    for(int i=0;i<navigate.size();i++)
+                    mConnectedThread.write(navigate.size() - 1+"");
+                    for(int i=1;i<navigate.size();i++)
                     {
-                        Log.d(TAG, navigate.get(i).getLatitude() + "," + navigate.get(i).getLongitude());
-                        mConnectedThread.write(navigate.get(i).getLatitude() + "," + navigate.get(i).getLongitude()+ ",");
+                        mConnectedThread.write(navigate.get(i).getLatitude() + "," + navigate.get(i).getLongitude());
                     }
                     mConnectedThread.write("\n");
+
+                    PolylineOptions opt = new PolylineOptions();
+                    opt.color( Color.parseColor( "#CC0000FF" ) );
+                    opt.width( 5 );
+                    opt.visible( true );
+
+                    for ( LatLong locs : navigate )
+                    {
+                        opt.add( new LatLng( locs.getLatitude(),
+                                locs.getLongitude() ) );
+                    }
+
+                    mMap.addPolyline(opt);
                 }
                 else
                 {
