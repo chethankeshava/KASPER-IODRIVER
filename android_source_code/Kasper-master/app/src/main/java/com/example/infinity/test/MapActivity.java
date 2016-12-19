@@ -18,7 +18,9 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.ByteArrayOutputStream;
@@ -49,6 +51,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
     private String address;
     private BluetoothDevice deviceName;
     private BluetoothAdapter btAdapter = null;
+    Marker locMarker = null;
     private StringBuilder sb = new StringBuilder();
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     public volatile boolean ackreceived;
@@ -97,6 +100,34 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                                         mMap.moveCamera(CameraUpdateFactory.newLatLng(coordinates));
                                         mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
                                     }
+                                    else
+                                    {
+                                        showToast("Location not received");
+                                    }
+                                }
+                                else if(parts[0].toString().trim().equalsIgnoreCase("ab"))
+                                {
+                                    Log.d(TAG,"Hi Dude");
+                                    String lat = parts[1].toString();
+                                    String lon = parts[2].toString();
+                                    if(lat.length()>0 && lon.length()>0)
+                                    {
+                                        if(locMarker!=null)
+                                        {
+                                            locMarker.remove();
+                                        }
+                                        LatLng coordinates = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
+                                        LatLong carLoc = new LatLong();
+                                        carLoc.setLatitude(Double.parseDouble(lat));
+                                        carLoc.setLongitude(Double.parseDouble(lon));
+                                        navigate.add(carLoc);
+                                        locMarker = mMap.addMarker(new MarkerOptions().position(coordinates).title("New Car Location"));
+                                        locMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.dot));
+                                        mMap.moveCamera(CameraUpdateFactory.newLatLng(coordinates));
+                                        mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
+
+                                    }
+
                                     else
                                     {
                                         showToast("Location not received");
