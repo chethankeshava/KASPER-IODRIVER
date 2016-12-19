@@ -90,6 +90,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                                     if(lat.length()>0 && lon.length()>0)
                                     {
                                         LatLng coordinates = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
+                                        LatLong carLoc = new LatLong();
+                                        carLoc.setLatitude(Double.parseDouble(lat));
+                                        carLoc.setLongitude(Double.parseDouble(lon));
                                         mMap.addMarker(new MarkerOptions().position(coordinates).title("Car Location"));
                                         mMap.moveCamera(CameraUpdateFactory.newLatLng(coordinates));
                                         mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
@@ -109,15 +112,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
 
                                 if(sbprint.toString().equalsIgnoreCase("ack"))
                                 {
-                                    /*
-                                    new Timer().schedule(new TimerTask() {
-                                        @Override
-                                        public void run() {
-                                            // this code will be executed after 2 seconds
-                                        }
-                                    }, 2000);
-                                    ackreceived =true;
-                                    */
+
                                     startButton.setVisibility(View.VISIBLE);
                                 }
                                 else
