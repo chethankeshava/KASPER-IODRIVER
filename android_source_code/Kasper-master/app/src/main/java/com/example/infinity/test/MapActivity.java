@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
@@ -122,7 +124,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                                         carLoc.setLongitude(Double.parseDouble(lon));
                                         navigate.add(carLoc);
                                         locMarker = mMap.addMarker(new MarkerOptions().position(coordinates).title("New Car Location"));
-                                        locMarker.setIcon(BitmapDescriptorFactory.fromResource(R.mipmap.dot));
+                                        locMarker.setIcon(BitmapDescriptorFactory.fromBitmap(resizeMapIcons(String.valueOf(R.mipmap.dot),25,25)));
                                         mMap.moveCamera(CameraUpdateFactory.newLatLng(coordinates));
                                         mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
 
@@ -224,6 +226,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
             }
         });
 
+    }
+
+    public Bitmap resizeMapIcons(String iconName, int width, int height){
+        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(iconName, "drawable", getPackageName()));
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+        return resizedBitmap;
     }
 
     @Override
