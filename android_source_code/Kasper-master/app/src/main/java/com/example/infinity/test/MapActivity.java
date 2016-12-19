@@ -35,8 +35,6 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 import com.example.infinity.test.LatLong;
@@ -58,13 +56,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
     Marker locMarker = null;
     private StringBuilder sb = new StringBuilder();
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    public volatile boolean ackreceived;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
 
         deviceName = getIntent().getParcelableExtra("device");
         address = deviceName.getAddress();
@@ -72,7 +68,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         connectButton = (Button) findViewById(R.id.connectButton);
         startButton = (Button) findViewById(R.id.startButton);
         stopButton = (Button) findViewById(R.id.stopButton);
-        ackreceived =false;
+
         h = new Handler() {
             public void handleMessage(android.os.Message msg) {
                 switch (msg.what) {
@@ -90,7 +86,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                             if(sbprint.toString().contains(","))
                             {
                                 String parts[] = sbprint.toString().split(",");
-                                if(parts[0].toString().equalsIgnoreCase("loc"))
+                                Log.d(TAG,parts[0] + "-" + parts[0].length());
+                                if(parts[0].toString().trim().equalsIgnoreCase("loc"))
                                 {
                                     String lat = parts[1].toString();
                                     String lon = parts[2].toString();
@@ -100,10 +97,13 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                                         LatLong carLoc = new LatLong();
                                         carLoc.setLatitude(Double.parseDouble(lat));
                                         carLoc.setLongitude(Double.parseDouble(lon));
+                                        navigate.add(carLoc);
                                         mMap.addMarker(new MarkerOptions().position(coordinates).title("Car Location"));
                                         mMap.moveCamera(CameraUpdateFactory.newLatLng(coordinates));
                                         mMap.animateCamera(CameraUpdateFactory.zoomTo(20));
+
                                     }
+
                                     else
                                     {
                                         showToast("Location not received");
@@ -144,10 +144,8 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
                             }
                             else
                             {
-
                                 if(sbprint.toString().equalsIgnoreCase("ack"))
                                 {
-
                                     startButton.setVisibility(View.VISIBLE);
                                 }
                                 else
@@ -171,20 +169,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                //byte[] readBuf = (byte[]) msg.obj;
-                //String strIncom = new String(readBuf, 0, msg.arg1);
-                //sb.append(strIncom);
-                //result.setText(sb.toString() + "\n");
-                //int endOfLineIndex = sb.indexOf("$");
-                //Log.d(TAG,endOfLineIndex+"");
-                //String ackString = sb.substring(0, endOfLineIndex);
-                //while(!(ackString.toString().equalsIgnoreCase("ack")))
-                //while(!(ackreceived)) {
-                    mConnectedThread.write("connect\n");
-                    Log.d(TAG, "...ackreceived = : " + ackreceived + "...");
-                    //ackreceived = false;
-                //}
+                mConnectedThread.write("connect\n");
             }
         });
 
@@ -225,7 +210,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mConnectedThread.write("start\n");
+                mConnectedThread.write("1\n");
                 stopButton.setVisibility(View.VISIBLE);
                 startButton.setVisibility(View.GONE);
             }
@@ -234,7 +219,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mConnectedThread.write("stop\n");
+                mConnectedThread.write("01\n");
                 startButton.setVisibility(View.VISIBLE);
                 stopButton.setVisibility(View.GONE);
             }
@@ -242,7 +227,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
 
     }
 
-    public Bitmap resizeMapIcons(String iconName, int width, int height){
+    public Bitmap resizeMapIcons(String iconName,int width, int height){
         Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(iconName, "drawable", getPackageName()));
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
         return resizedBitmap;
@@ -279,39 +264,45 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback 
         btAdapter.cancelDiscovery();
 
         // Establish the connection.  This will block until it connects.
-        Log.d(TAG, "...Connecting...");
-        try {
-            btSocket.connect();
-            Log.d(TAG, "....Connection ok...");
-            // Create a data stream so we can talk to server.
-            Log.d(TAG, "...Create Socket...");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "...Connecting...");
+                try {
 
-            mConnectedThread = new ConnectedThread(btSocket);
-            mConnectedThread.start();
-        } catch (IOException e) {
-            Log.d(TAG, "....Entering Catch...");
-            e.printStackTrace();
-            try {
-                Log.d(TAG, "....Closing Socket...");
-                btSocket.close();
-            } catch (IOException e2) {
-                Log.d(TAG, "....Fatal Error...");
-                errorExit("Fatal Error", "close socket during connection failure" + e2.getMessage() + ".");
+                    btSocket.connect();
+                    Log.d(TAG, "....Connection ok...");
+                    // Create a data stream so we can talk to server.
+                    Log.d(TAG, "...Create Socket...");
+
+                    mConnectedThread = new ConnectedThread(btSocket);
+                    mConnectedThread.start();
+                } catch (IOException e) {
+                    Log.d(TAG, "....Entering Catch...");
+                    e.printStackTrace();
+                    try {
+                        Log.d(TAG, "....Closing Socket...");
+                        btSocket.close();
+                    } catch (IOException e2) {
+                        Log.d(TAG, "....Fatal Error...");
+                        errorExit("Fatal Error", "close socket during connection failure" + e2.getMessage() + ".");
+                    }
+                }
             }
-        }
+        });
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng point) {
                 int position = 1;
                 MarkerOptions marker = new MarkerOptions().position(
-                        new LatLng(point.latitude, point.longitude)).title(position+"");
+                        new LatLng(point.latitude, point.longitude)).title(position+"")
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
 
                 mMap.addMarker(marker);
                 LatLong cood = new LatLong();
                 cood.setLatitude(point.latitude);
                 cood.setLongitude(point.longitude);
-                Log.d(TAG,"hii " + cood.getLatitude() + "," + cood.getLongitude());
                 navigate.add(cood);
 
                 sendCoordinates.setVisibility(View.VISIBLE);
