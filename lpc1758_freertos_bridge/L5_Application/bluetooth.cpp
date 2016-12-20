@@ -43,6 +43,7 @@ int Send_App_curr_loc(char *lat, char *lon)
 {
     //printf("%s \n",lat);
     //printf("%s \n",lon);
+	memset(send_cor_data, 0, sizeof(send_cor_data));
     strcat(send_cor_data,"loc,");
     strcat(send_cor_data,lat);
     strcat(send_cor_data,",");
