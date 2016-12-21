@@ -41,8 +41,9 @@ GPS_LOCATION_t GPS_LOCATION_RECEIVE = {0};
 
 int Send_App_curr_loc(char *lat, char *lon)
 {
-    printf("%s \n",lat);
-    printf("%s \n",lon);
+    //printf("%s \n",lat);
+    //printf("%s \n",lon);
+	memset(send_cor_data, 0, sizeof(send_cor_data));
     strcat(send_cor_data,"loc,");
     strcat(send_cor_data,lat);
     strcat(send_cor_data,",");
@@ -187,9 +188,10 @@ void Check_Start_STOP_Condition()
 		dbc_encode_and_send_BRIDGE_TOTAL_CHECKPOINT(&BRIDGE_TOTAL_CHECKPOINT);
 		for(loop = 0; loop < (check_point_total*2) ;loop=loop+2)
 		{
-			u0_dbg_printf("LAT = %f\n",store_cor[loop]);
+			u0_dbg_printf("Checkpoint received");
+			//u0_dbg_printf("LAT = %f\n",store_cor[loop]);
 			BLUETOOTH_DATA_Location.BLUETOOTH_DATA_LAT = store_cor[loop];
-			u0_dbg_printf("LON =  %f\n",store_cor[loop+1]);
+			//u0_dbg_printf("LON =  %f\n",store_cor[loop+1]);
 			BLUETOOTH_DATA_Location.BLUETOOTH_DATA_LON = store_cor[loop+1];
 			dbc_encode_and_send_BLUETOOTH_DATA(&BLUETOOTH_DATA_Location);
 		}
@@ -224,7 +226,7 @@ void Can_Receive_ID_Task()
 		if(can_msg_Info.msg_id == GPS_LOCATION_HDR.mid)
 		{
 			dbc_decode_GPS_LOCATION(&GPS_LOCATION_RECEIVE, can_msg_Info.data.bytes, &can_msg_hdr);
-			printf("GPS_LOCATION_RECEIVE\n");
+			//printf("GPS_LOCATION_RECEIVE\n");
 			sprintf(lat,"%f",GPS_LOCATION_RECEIVE.GPS_LOCATION_latitude);
 			sprintf(lon,"%f",GPS_LOCATION_RECEIVE.GPS_LOCATION_longitude);
 		    Send_App_curr_loc(lat,lon);

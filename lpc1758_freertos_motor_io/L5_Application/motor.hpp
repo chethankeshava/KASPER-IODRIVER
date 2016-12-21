@@ -32,6 +32,10 @@ enum MOTOR_DIRECTION
 extern int s_left;
 extern int s_center;
 extern int s_right;
+extern float distance;
+extern float heading;
+extern float bearing;
+
 extern int white_value,max_light_value,min_light_value,temp_count,rpm;
 
 extern float stop_dc;//   =   7.0;
@@ -67,6 +71,7 @@ void dcmotor_init(void);
 void rx_rpm(void);
 //void drive_motor();
 void drive_with_feedback(void);
+void receive_motor_commands(void);
 
 #ifdef __cplusplus
 }

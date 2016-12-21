@@ -40,13 +40,15 @@
 #include "lcd.hpp"
 #include "gpio.hpp"
 #include "eint.h"
+#include "file_logger.h"
 
+extern int speed_temp;
 int m_rpmCounter=0;
 
 
 extern int white_patch_count;
-float latitide = 37.322993;
-float longitude = -121.883200;
+extern float latitide;
+extern float longitude;
 int white_value,max_light_value,min_light_value;
 int temp_count;
 /**
@@ -54,14 +56,12 @@ int temp_count;
  */
 int pwm_input = 6.4;
 int rpm;
-extern int tilt_y;
-extern int dc_pwm;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 char lcdBuffer[128]={};
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
- * Minimum 1500 bytes are needed in order to write a debug file if the period tasks overrun.
+ * Minimum 1500 bytes are ne44eded in order to write a debug file if the period tasks overrun.
  * This stack size is also used while calling the period_init() and period_reg_tlm(), and if you use
  * printf inside these functions, you need about 1500 bytes minimum
  */
@@ -101,11 +101,13 @@ bool period_init(void)
 	CAN_bypass_filter_accept_all_msgs();
 	CAN_reset_bus(can1);
 
+//	logger_init(PRIORITY_HIGH); // initilize the logger
+	// logger_send_flush_request();
+	//printf("Number of buffers--->%u\n",logger_get_num_buffers_watermark());
+	// printf("get_highest_file_write_time_ms--->%u\n",logger_get_highest_file_write_time_ms());
+	// printf("get_blocked_call_count-->%u\n",logger_get_blocked_call_count());
+	// printf("logged_call_count-->%u\n",logger_get_logged_call_count(log_info));
 
-	white_value = 2300;
-	max_light_value = 2000;
-	min_light_value = 7000;
-	temp_count = 0;
 
 	lcdInit();
 	lcdWriteObj(LCD_OBJ_FORM,LCD_FORM0_INDEX,0);
@@ -129,7 +131,7 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 
-	lcdWriteObj(LCD_OBJ_LED_DIGITS,LCD_LEDDIGIT_INDEX,m_rpmCounter);
+	lcdWriteObj(LCD_OBJ_METER,LCD_SPEED_METER_INDEX,m_rpmCounter);
 #if 1
 	//sprintf(lcdBuffer,"%d",white_patch_count);
 	//lcdWriteStr(LCD_FRONT_LEFT_SENSOR_INDEX,lcdBuffer);
@@ -145,10 +147,16 @@ void period_1Hz(uint32_t count)
 	lcdWriteStr(LCD_LATITUDE_INDEX,lcdBuffer);
 	sprintf(lcdBuffer,"%f",longitude);
 	lcdWriteStr(LCD_LONGITUDE_INDEX,lcdBuffer);
-	//sprintf(lcdBuffer,"%d",white_patch_count);
-	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
-	//sprintf(lcdBuffer,"%d",white_patch_count);
-	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%f",bearing);
+	lcdWriteStr(LCD_BEARING_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%f",heading);
+	lcdWriteStr(LCD_HEADING_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%f",distance);
+	lcdWriteStr(LCD_DISTANCE_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%d",m_rpmCounter);
+	lcdWriteStr(LCD_SPEED_INDEX,lcdBuffer);
+	sprintf(lcdBuffer,"%f",speed_temp);
+	lcdWriteStr(LCD_BACK_SENSOR_INDEX,lcdBuffer);
 
 #endif
 
@@ -159,13 +167,13 @@ void period_1Hz(uint32_t count)
 		CAN_reset_bus(can1);
 	}
 
-	printf(" %d ",m_rpmCounter);
-	m_rpmCounter=0;
+
+//	LOG_INFO(" %d ",m_rpmCounter);
+
+//		printf(" %d ",m_rpmCounter);
+//	m_rpmCounter=0;
 
 
-	//printf(" %d \n",white_patch_count);
-
-//	white_patch_count=0;
 
 
 
@@ -175,7 +183,7 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
 	drive_car();
-//	drive_with_feedback();
+	//	drive_with_feedback();
 
 	if(SW.getSwitch(1))
 	{
@@ -183,7 +191,6 @@ void period_10Hz(uint32_t count)
 	}
 	else if(SW.getSwitch(2))
 	{
-		//		puts("hey");
 		dc_accelerate(6.4);
 	}
 	else if(SW.getSwitch(3))
@@ -198,22 +205,12 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
-	//	if(count%500==0)
-	//	{
-	//		//	printf("RPM = %d\n",rpm);
-	////		rpm = 0;
-	//	}
-	//	if(count%100==0)
-	//	{
-	//		white_value = (max_light_value + min_light_value)/2;
-	//		max_light_value = 0;
-	//		min_light_value = 2500;
-	//	}
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-	//LE.toggle(4);
+	//LE.`toggle(4);
 }

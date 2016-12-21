@@ -43,6 +43,9 @@ typedef enum {
 #define LCD_LONGITUDE_INDEX				0x04
 #define LCD_BEARING_INDEX				0x05
 #define LCD_HEADING_INDEX				0x06
+#define LCD_DISTANCE_INDEX				0x07
+#define LCD_SPEED_INDEX					0x08
+#define LCD_BACK_SENSOR_INDEX			0x09
 
 #define LCD_OBJ_DIPSW         0
 #define LCD_OBJ_KNOB          1
