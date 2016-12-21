@@ -33,7 +33,7 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 
 
 
-
+#if 0
 
 void geoSendHeartBeat()
 {
@@ -42,3 +42,4 @@ void geoSendHeartBeat()
 	geoHeartBeat.GEO_HEARTBEAT_data = GEO_HEARTBEAT_SIGNATURE;
 	dbc_encode_and_send_GEO_HEARTBEAT(&geoHeartBeat);
 }
+#endif

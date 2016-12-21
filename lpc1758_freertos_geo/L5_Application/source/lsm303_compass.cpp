@@ -6,7 +6,7 @@
  */
 #include <stdio.h>
 #include <stdint.h>
-#include <math.h>
+//#include <math.h>
 #include "io.hpp" 					// All IO Class definitions
 #include "lsm303_compass.hpp"
 #include "printf_lib.h"
@@ -22,6 +22,9 @@ float Mag_minz;
 float Mag_maxx;
 float Mag_maxy;
 float Mag_maxz;
+
+
+
 bool lsm303_compass::init()
 {
 
@@ -39,6 +42,9 @@ bool lsm303_compass::init()
 		//writeReg(CTRL_REG4_A,0x00);
 
 		printf("Initialization done LSM303 Magnetometer\n");
+
+		//m_min = (vector<int16_t>){-32767, -32767, -32767};
+		//m_max = (vector<int16_t>){+32767, +32767, +32767};
 	}
 
 	return devicePresent;
@@ -66,36 +72,55 @@ void lsm303_compass::getMagnetometerData()
 	delay_us(100);
 
 	Mx = (int16_t)(MR_Data[0] << 8) + MR_Data[1];
+	//m.x	= (int16_t)(MR_Data[0] << 8) + MR_Data[1];
 	My = (int16_t)(MR_Data[2] << 8) + MR_Data[3];
+	//m.y = (int16_t)(MR_Data[2] << 8) + MR_Data[3];
 	Mz = (int16_t)(MR_Data[4] << 8) + MR_Data[5];
+	//m.z = (int16_t)(MR_Data[4] << 8) + MR_Data[5];
 
 	//u0_dbg_printf("Mx:%f,My:%f,Mz:%f\n",Mx,My,Mz);
 }
 
 
-void lsm303_compass::calibrate()
+
+#if 0
+void lsm303_compass::calibrate(void)
 {
+	LSM_MAG.getMagnetometerData();
+	running_min.x = min(running_min.x, m.x);
+	running_min.y = min(running_min.y, m.y);
+	running_min.z = min(running_min.z, m.z);
 
+	running_max.x = max(running_max.x, m.x);
+	running_max.y = max(running_max.y, m.y);
+	running_max.z = max(running_max.z, m.z);
 }
-
+#endif
 void lsm303_compass::getHeading(float *curHeading)
 {
+#if 1
 //	Mag_minx = -572;
 //	Mag_miny = -656;
 //	Mag_minz = -486;
 //	Mag_maxx = 429;
 //	Mag_maxy = 395;
 //	Mag_maxz = 535;
+	//Mag_minx = -542;
+	//Mag_miny = -734;
+	//Mag_minz = -1282;
+	//Mag_maxx = 710;
+	//Mag_maxy = 465;
+	//Mag_maxz = -1158;
 
-	LSM.getMagnetometerData();
+	LSM_MAG.getMagnetometerData();
 	LSM_ACCL.getAccelerometerData();
 
-	Mag_minx = -228;
-	Mag_miny = -331;
-	Mag_minz = -694;
-	Mag_maxx = 381;
-	Mag_maxy = 220;
-	Mag_maxz = -507;
+	Mag_minx = -268;
+	Mag_miny = -440;
+	Mag_minz = -756;
+	Mag_maxx = 437;
+	Mag_maxy = 254;
+	Mag_maxz = -703;
 
 	// use calibration values to shift and scale magnetometer measurements
 	Mx = (Mx-Mag_minx)/(Mag_maxx-Mag_minx)*2-1;
@@ -137,8 +162,8 @@ void lsm303_compass::getHeading(float *curHeading)
 		heading =270;
 	}
 #endif
-	heading = (180*atan2(magycomp,magxcomp))/M_PI;
 
+	heading = (180*atan2(magycomp, magxcomp))/M_PI;
 
 	if (heading < 0)
 		heading +=360;
@@ -146,7 +171,7 @@ void lsm303_compass::getHeading(float *curHeading)
 	*curHeading = heading;
 	//u0_dbg_printf("%d,%d,%d\n",Magx,Magy,Magz);
 	//u0_dbg_printf("%f\n",heading);
-
+#endif
 }
 
 

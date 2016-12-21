@@ -167,7 +167,7 @@ void compass::getHeading(float *curHeading)
 	// Convert to degrees
 	*curHeading = (heading * 180/M_PI);
 
-	//u0_dbg_printf("Heading value is %.2f\n",*curHeading);
+	u0_dbg_printf("Heading value is %.2f\n",*curHeading);
 	v={0};
 
 }

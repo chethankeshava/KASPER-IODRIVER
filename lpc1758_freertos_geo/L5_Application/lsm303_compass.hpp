@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 #include "i2c2_device.hpp"  // I2C Device Base Class
+#include <math.h>
+
 
 typedef enum {
 	CRA_REG_M =		0x00,
@@ -37,6 +39,12 @@ typedef enum {
 	TEMP_OUT_H_M =	0x31,
 	TEMP_OUT_L_M =	0x32
 } __attribute__ ((packed)) RegisterMap;
+
+
+template <typename T> struct vector
+{
+	T x, y, z;
+};
 
 /**
  * Acceleration Sensor class used to get acceleration data reading from the on-board sensor.
@@ -79,6 +87,7 @@ class lsm303_compass_accl : private i2c2_device, public SingletonTemplate<lsm303
 
 
 };
+
 
 
 

@@ -70,8 +70,8 @@ bool period_init(void)
 {
 	can_msg_t msg;
 
-	LSM.init();
-	LSM_ACCL.init();
+//	LSM.init();
+//	LSM_ACCL.init();
 
 #if 0
 	// Initialize compass module
@@ -154,6 +154,7 @@ void period_1Hz(uint32_t count)
 		CAN_reset_bus(GEO_CAN_BUS);
 	}
 
+	//geotask.readGpsData();
 	geotask.sendGpsData();
 	geotask.sendCompassData();
 	//compassi2c.getHeading(&tempheading);
@@ -166,6 +167,9 @@ void period_10Hz(uint32_t count)
 	can_msg_t msg;
 
 	geotask.readGpsData();
+	//geotask.sendCompassData();
+	//u0_dbg_printf("#");
+	//geotask.readGpsData();
 	//geotask.sendCompassData();
 
 	while(CAN_rx(GEO_CAN_BUS, &msg, 10))	// 100ms timeout for receive
@@ -191,6 +195,7 @@ void period_10Hz(uint32_t count)
 void period_100Hz(uint32_t count)
 {
     LE.toggle(3);
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
