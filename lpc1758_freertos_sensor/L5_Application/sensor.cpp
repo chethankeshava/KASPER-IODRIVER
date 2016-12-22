@@ -4,7 +4,6 @@
  *  Created on: Nov 28, 2016
  *      Author: Rimjhim & Shruthi
  */
-
 #include "sensor.hpp"
 #include "string.h"
 #include "gpio.hpp"
@@ -12,40 +11,11 @@
 #include "soft_timer.hpp"
 #define Distance_Scale 0.017 /** (340*100*0.000001)/2, speed of sound=340m/s, 1m=100cm, 1us=0.000001s  **/
 #define Echo_Return_Pulse 19 /**Echo Return Pulse Maximum 18.5 ms **/
-
 GPIO LeftSIG(P2_2); // Left SIG pin
 GPIO CenterSIG(P2_0); // Center SIG pin
 GPIO RightSIG(P2_4); // Right SIG pin
 GPIO BackSIG(P2_5); //Back SIG pin
-
 SENSOR_SONIC_t sensor_msg={0};
-
-void Sensor(){
-	/**
-	 * todo: If you are going to use delays here ensure that you do not run over in time.
-	 */
-	static int sen_count=0;
-		if(sen_count%2)
-		{
-	Sensor_left();
-	Sensor_right();
-	delay_ms(40);
-		}
-		else
-		{
-	Sensor_center();
-	//Sensor_back();
-	delay_ms(40);
-		}
-
-	Transmit();
-
-	sen_count++;
-		if(sen_count>1000)
-		{
-			sen_count=0;
-		}
-
 void Sensor()
 {
 	Sensor_left();
@@ -53,7 +23,6 @@ void Sensor()
 	Sensor_center();
 	Sensor_back();
 }
-
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 {
 	can_msg_t can_msg = { 0 };
@@ -63,7 +32,6 @@ bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8])
 	// printf("sending..");
 	return CAN_tx(can1, &can_msg, 0);
 }
-
 void Transmit(void)
 {
 	if(dbc_encode_and_send_SENSOR_SONIC(&sensor_msg))
@@ -77,8 +45,6 @@ void Transmit(void)
 	else
 		LD.setNumber(0);
 }
-
-
 void Sensor_left(void)
 {
 	bool flag_left = true;
@@ -86,10 +52,8 @@ void Sensor_left(void)
 	SoftTimer ping_duration_left;
 	int time_left;
 	int distance_left;
-
 	ping_duration_left.reset(Echo_Return_Pulse);
 	ping_duration_left.restart();
-
 	while(1)
 	{
 		/**make SIGpin output, enable ranging, disable ranging, make SIGpin input**/
@@ -98,13 +62,12 @@ void Sensor_left(void)
 			LeftSIG.setAsOutput(); /**make SIGpin output**/
 			LeftSIG.setLow(); /**make low for 2us and then high for clean high**/
 			delay_us(2);
-			LeftSIG.setHigh(); /** enable Ranging (enable left sonar). trigger/make high for 2 탎 (min), 5 탎 typical **/
+			LeftSIG.setHigh(); /** enable Ranging (enable left sonar). trigger/make high for 2 s (min), 5 s typical **/
 			delay_us(5);
 			LeftSIG.setLow(); /**disable ranging**/
 			LeftSIG.setAsInput(); /**make SIGpin input**/
 			flag_left = false;
 		}
-
 		/**start timer when echo pulse is high**/
 		if((LPC_GPIO2->FIOPIN & (1 << 2)) && !flag_ping_high_left)
 		{
@@ -112,7 +75,6 @@ void Sensor_left(void)
 			lpc_timer_set_value(lpc_timer0,0); /**set timer0 value=0**/
 			flag_ping_high_left = true;
 		}
-
 		/**calculate distance when echo pulse goes low**/
 		if(!(LPC_GPIO2->FIOPIN & (1 << 2)) && flag_ping_high_left)
 		{
@@ -124,7 +86,6 @@ void Sensor_left(void)
 			flag_ping_high_left = false;
 			break;
 		}
-
 		/**no echo**/
 		if(ping_duration_left.expired())
 		{
@@ -134,7 +95,6 @@ void Sensor_left(void)
 		}
 	}
 }
-
 void Sensor_center(void)
 {
 	bool flag_center = true;
@@ -142,10 +102,8 @@ void Sensor_center(void)
 	SoftTimer ping_duration_center;
 	int time_center;
 	int distance_center;
-
 	ping_duration_center.reset(Echo_Return_Pulse);
 	ping_duration_center.restart();
-
 	while(1)
 	{
 		/**make SIGpin output, enable ranging, disable ranging, make SIGpin input**/
@@ -154,13 +112,12 @@ void Sensor_center(void)
 			CenterSIG.setAsOutput(); /**make SIGpin output**/
 			CenterSIG.setLow();/**make low for 2us and then high for clean high**/
 			delay_us(2);
-			CenterSIG.setHigh();/** enable Ranging (enable center sonar). make high for 2 탎 (min), 5 탎 typical **/
+			CenterSIG.setHigh();/** enable Ranging (enable center sonar). make high for 2 s (min), 5 s typical **/
 			delay_us(5);
 			CenterSIG.setLow();/**disable ranging**/
 			CenterSIG.setAsInput(); //make SIGpin input
 			flag_center = false;
 		}
-
 		/**start timer when echo pulse is high**/
 		if((LPC_GPIO2->FIOPIN & (1 << 0)) && !flag_ping_high_center)
 		{
@@ -168,7 +125,6 @@ void Sensor_center(void)
 			lpc_timer_set_value(lpc_timer0,0); /**set timer0 value=0**/
 			flag_ping_high_center = true;
 		}
-
 		/**calculate distance when echo pulse goes low**/
 		if(!(LPC_GPIO2->FIOPIN & (1 << 0)) && flag_ping_high_center)
 		{
@@ -180,7 +136,6 @@ void Sensor_center(void)
 			flag_ping_high_center = false;
 			break;
 		}
-
 		/**no echo**/
 		if(ping_duration_center.expired())
 		{
@@ -190,7 +145,6 @@ void Sensor_center(void)
 		}
 	}
 }
-
 void Sensor_right(void)
 {
 	bool flag_right = true;
@@ -198,10 +152,8 @@ void Sensor_right(void)
 	SoftTimer ping_duration_right;
 	int time_right;
 	int distance_right;
-
 	ping_duration_right.reset(Echo_Return_Pulse);
 	ping_duration_right.restart();
-
 	while(1)
 	{
 		/**make SIGpin output, enable ranging, disable ranging, make SIGpin input**/
@@ -210,13 +162,12 @@ void Sensor_right(void)
 			RightSIG.setAsOutput();/**make SIGpin output**/
 			RightSIG.setLow();/**make low for 2us and then high for clean high**/
 			delay_us(2);
-			RightSIG.setHigh();/** enable Ranging (enable right sonar). make high for 2 탎 (min), 5 탎 typical **/
+			RightSIG.setHigh();/** enable Ranging (enable right sonar). make high for 2 s (min), 5 s typical **/
 			delay_us(5);
 			RightSIG.setLow();/**disable ranging**/
 			RightSIG.setAsInput(); //make SIGpin input
 			flag_right = false;
 		}
-
 		/**start timer when echo pulse is high**/
 		if((LPC_GPIO2->FIOPIN & (1 << 4)) && !flag_ping_high_right)
 		{
@@ -224,7 +175,6 @@ void Sensor_right(void)
 			lpc_timer_set_value(lpc_timer0,0); /**set timer0 value=0**/
 			flag_ping_high_right = true;
 		}
-
 		/**calculate distance when echo pulse goes low**/
 		if(!(LPC_GPIO2->FIOPIN & (1 << 4)) && flag_ping_high_right)
 		{
@@ -236,7 +186,6 @@ void Sensor_right(void)
 			flag_ping_high_right = false;
 			break;
 		}
-
 		/**no echo**/
 		if(ping_duration_right.expired())
 		{
@@ -246,7 +195,6 @@ void Sensor_right(void)
 		}
 	}
 }
-
 void Sensor_back(void)
 {
 	bool flag_back = true;
@@ -254,10 +202,8 @@ void Sensor_back(void)
 	SoftTimer ping_duration_back;
 	int time_back;
 	int distance_back;
-
 	ping_duration_back.reset(Echo_Return_Pulse);
 	ping_duration_back.restart();
-
 	while(1)
 	{
 		/**make SIGpin output, enable ranging, disable ranging, make SIGpin input**/
@@ -266,13 +212,12 @@ void Sensor_back(void)
 			BackSIG.setAsOutput(); /**make SIGpin output**/
 			BackSIG.setLow();/**make low for 2us and then high for clean high**/
 			delay_us(2);
-			BackSIG.setHigh();/** enable Ranging (enable left sonar). make high for 2 탎 (min), 5 탎 typical **/
+			BackSIG.setHigh();/** enable Ranging (enable left sonar). make high for 2 s (min), 5 s typical **/
 			delay_us(5);
 			BackSIG.setLow();/**disable ranging**/
 			BackSIG.setAsInput();//make SIGpin input
 			flag_back = false;
 		}
-
 		/**start timer when echo pulse is high**/
 		if((LPC_GPIO2->FIOPIN & (1 << 5)) && !flag_ping_high_back)
 		{
@@ -280,7 +225,6 @@ void Sensor_back(void)
 			lpc_timer_set_value(lpc_timer0,0); /**set timer0 value=0**/
 			flag_ping_high_back = true;
 		}
-
 		/**calculate distance when echo pulse goes low**/
 		if(!(LPC_GPIO2->FIOPIN & (1 << 5)) && flag_ping_high_back)
 		{
@@ -292,7 +236,6 @@ void Sensor_back(void)
 			flag_ping_high_back = false;
 			break;
 		}
-
 		/**no echo**/
 		if(ping_duration_back.expired())
 		{
@@ -302,6 +245,3 @@ void Sensor_back(void)
 		}
 	}
 }
-
-
-
