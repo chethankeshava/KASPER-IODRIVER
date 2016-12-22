@@ -37,12 +37,14 @@ typedef struct sensorData{
 	float longitude;			///< Stores Longitude
 }Bluetooth_Received;
 
+int indent(char *buffer);
 bool uart_putchar(char character);
 bool dbc_app_send_can_msg(uint32_t mid, uint8_t dlc, uint8_t bytes[8]);
 void canBusErrorCallBackRx(uint32_t ibits);
 void Receive_BluetoothData();
 void Can_Receive_ID_Task();
 void Check_Start_STOP_Condition();
+
 class Bluetooth_Enable : public scheduler_task
 {
 	private:
@@ -59,7 +61,6 @@ class Bluetooth_Enable : public scheduler_task
         }*/
         bool init(void);
         bool run(void *p);
-
 };
 
 

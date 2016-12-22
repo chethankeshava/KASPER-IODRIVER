@@ -64,6 +64,7 @@ MSG_ID: 460 	MSG_TYPE: S 	MSG_NAME: COMPASS_DATA
 	SIG_NAME: COMPASS_DATA_speed, STATUS: Invalid Max or Min value., ACTION: Value Set to default
 	SIG_NAME: COMPASS_DATA_heading, STATUS: Invalid Max or Min value., ACTION: Value Set to default
 	SIG_NAME: COMPASS_DATA_bearing, STATUS: Invalid Max or Min value., ACTION: Value Set to default
+	SIG_NAME: COMPASS_DATA_distance, STATUS: Invalid Max or Min value., ACTION: Value Set to default
 
 MSG_ID: 470 	MSG_TYPE: S 	MSG_NAME: CURRENT_LOCATION_ACK
 	SIG_NAME: CURRENT_LOCATION_ACK_ack, STATUS: Invalid Max or Min value., ACTION: Value Set to default
@@ -71,9 +72,6 @@ MSG_ID: 470 	MSG_TYPE: S 	MSG_NAME: CURRENT_LOCATION_ACK
 MSG_ID: 480 	MSG_TYPE: S 	MSG_NAME: GPS_LOCATION
 	SIG_NAME: GPS_LOCATION_latitude, STATUS: Invalid Max or Min value., ACTION: Value Set to default
 	SIG_NAME: GPS_LOCATION_longitude, STATUS: Invalid Max or Min value., ACTION: Value Set to default
-
-MSG_ID: 490 	MSG_TYPE: S 	MSG_NAME: DISTANCE_TO_DESTINATION
-	SIG_NAME: DISTANCE_TO_DESTINATION_data, STATUS: Invalid Max or Min value., ACTION: Value Set to default
 
 MSG_ID: 500 	MSG_TYPE: S 	MSG_NAME: BATTERY_STATUS
 	SIG_NAME: DISTANCE_TO_DESTINATION_status, STATUS: Invalid Max or Min value., ACTION: Value Set to default

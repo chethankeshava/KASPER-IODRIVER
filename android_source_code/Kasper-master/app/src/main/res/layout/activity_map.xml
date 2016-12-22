@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_map"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.infinity.test.MapActivity">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:id="@+id/menu1"
+        android:orientation="horizontal"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:id="@+id/connectButton"
+            android:text="Connect"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:id="@+id/navigateButton"
+            android:text="Send"
+            android:layout_toRightOf="@+id/connectButton"
+            android:visibility="gone"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:id="@+id/startButton"
+            android:text="Start"
+            android:layout_toRightOf="@+id/navigateButton"
+            android:visibility="gone"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:id="@+id/stopButton"
+            android:text="Stop"
+            android:layout_toRightOf="@+id/startButton"
+            android:visibility="gone"
+            android:layout_height="wrap_content" />
+
+    </RelativeLayout>
+
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/map"
+        android:layout_below="@+id/menu1"
+        tools:context=".MapsActivity"
+        android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+
+
+</RelativeLayout>

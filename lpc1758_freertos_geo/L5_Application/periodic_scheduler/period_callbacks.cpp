@@ -50,10 +50,10 @@
 
 geoTask geotask;
 bool receivedAck = false;
-
+float tempheading =0.0;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
-
+bool newChkPointRecvd = false;
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -70,13 +70,17 @@ bool period_init(void)
 {
 	can_msg_t msg;
 
+//	LSM.init();
+//	LSM_ACCL.init();
+
+#if 0
 	// Initialize compass module
 	if(!(compassi2c.init()))
 	{
 		u0_dbg_printf("Device not present\n");
-		return false;
+		//return false;
 	}
-
+#endif
 	// Initialize GEO module
 	if(!geotask.init())
 	{
@@ -125,6 +129,7 @@ bool period_init(void)
 		delay_ms(1);
 	}
 #endif
+
 	return true; // Must return true upon success
 }
 
@@ -143,13 +148,16 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
+
 	if(CAN_is_bus_off(GEO_CAN_BUS))
 	{
 		CAN_reset_bus(GEO_CAN_BUS);
 	}
 
+	//geotask.readGpsData();
 	geotask.sendGpsData();
 	geotask.sendCompassData();
+	//compassi2c.getHeading(&tempheading);
 
 }
 
@@ -158,9 +166,14 @@ void period_10Hz(uint32_t count)
 	NEXT_CHECKPOINT_DATA_t checkPointData;
 	can_msg_t msg;
 
+	geotask.readGpsData();
+	//geotask.sendCompassData();
+	//u0_dbg_printf("#");
+	//geotask.readGpsData();
+	//geotask.sendCompassData();
+
 	while(CAN_rx(GEO_CAN_BUS, &msg, 10))	// 100ms timeout for receive
 	{
-		u0_dbg_printf("Received a can frame with ID: %#4X\n", msg.msg_id);
 		if(msg.msg_id == NEXT_CHECKPOINT_DATA_HDR.mid)
 		{
 			dbc_msg_hdr_t can_msg_hdr;
@@ -171,13 +184,18 @@ void period_10Hz(uint32_t count)
 
 			dbc_decode_NEXT_CHECKPOINT_DATA(&checkPointData, msg.data.bytes, &can_msg_hdr );
 			geotask.setChkPointData(checkPointData.NEXT_CHECKPOINT_DATA_latitude,checkPointData.NEXT_CHECKPOINT_DATA_longitude);
+			u0_dbg_printf("lat:%f",checkPointData.NEXT_CHECKPOINT_DATA_latitude);
+			u0_dbg_printf("lon:%f",checkPointData.NEXT_CHECKPOINT_DATA_longitude);
+			newChkPointRecvd = true;
 		}
 	}
+
 }
 
 void period_100Hz(uint32_t count)
 {
     LE.toggle(3);
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():

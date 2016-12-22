@@ -40,8 +40,6 @@
 #include "can.h"
 #include "../../_can_dbc/generated_can.h"
 
-// todo: fix the spacing for these includes.
-
 #define BluetoothPeriodicSchedular 1
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -56,12 +54,11 @@ const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 const GPS_LOCATION_t                  	         	GPS_LOCATION_DATA 	= 	{0};
 const BLUETOOTH_DATA_t                           	BLUETOOTH__MIA_MSG 		{0};
-const BRIDGE_HEARTBEAT_t                         	BRIDGE_DATA__MIA_MSG 	{0};
+//const BRIDGE_HEARTBEAT_t                         	BRIDGE_DATA__MIA_MSG 	{0};
 const uint32_t            							RESET__MIA_MS 		= 	3;
 const RESET_t      									RESET__MIA_MSG		= 	{4};
 
 void canBusErrorCallBackRx(uint32_t ibits);
-// todo: this declaration is not necessary since it is in bluetooth.hpp
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
@@ -99,19 +96,14 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 #if BluetoothPeriodicSchedular
-	BRIDGE_HEARTBEAT_t HEARTBEAT_Data = { 0 };
+	//BRIDGE_HEARTBEAT_t HEARTBEAT_Data = { 0 };
 	BRIDGE_POWER_SYNC_t BRIDGE_POWER_SYNC_Data = {0};
-
-/**
- * todo: not necessary to do this in 1Hz task since you have bus_off_cb function defined.
- * You can do this there instead.
- */
 	if (CAN_is_bus_off(can1))
 	{
 		CAN_reset_bus(can1);
 		LE.toggle(1);
 	}
-	dbc_encode_and_send_BRIDGE_HEARTBEAT(&HEARTBEAT_Data);
+	//dbc_encode_and_send_BRIDGE_HEARTBEAT(&HEARTBEAT_Data);
 	dbc_encode_and_send_BRIDGE_POWER_SYNC(&BRIDGE_POWER_SYNC_Data);
 #endif
 }
