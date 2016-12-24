@@ -44,13 +44,11 @@
 
 extern int speed_temp;
 int m_rpmCounter=0;
+int prev_rpmCounter=0;
+extern int s_back;
 
-
-extern int white_patch_count;
 extern float latitide;
 extern float longitude;
-int white_value,max_light_value,min_light_value;
-int temp_count;
 /**
  * todo: avoid global variables.
  */
@@ -70,6 +68,7 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 void counter(void)
 {
 	//puts("hi");
+	//printf("#");
 	m_rpmCounter++;
 }
 
@@ -141,6 +140,8 @@ void period_1Hz(uint32_t count)
 	lcdWriteStr(LCD_FRONT_CENTER_SENSOR_INDEX,lcdBuffer);
 	sprintf(lcdBuffer,"%d",s_right);
 	lcdWriteStr(LCD_FRONT_RIGHT_SENSOR_INDEX,lcdBuffer);
+	//sprintf(lcdBuffer,"%d",s_);
+	//lcdWriteStr(LCD_BACK_SENSOR_INDEX,lcdBuffer);
 	//sprintf(lcdBuffer,"%d",white_patch_count);
 	//lcdWriteStr(LCD_RPM_STRING_INDEX,lcdBuffer);
 	sprintf(lcdBuffer,"%f",latitide);
@@ -155,7 +156,7 @@ void period_1Hz(uint32_t count)
 	lcdWriteStr(LCD_DISTANCE_INDEX,lcdBuffer);
 	sprintf(lcdBuffer,"%d",m_rpmCounter);
 	lcdWriteStr(LCD_SPEED_INDEX,lcdBuffer);
-	sprintf(lcdBuffer,"%f",speed_temp);
+	sprintf(lcdBuffer,"%d",s_back);
 	lcdWriteStr(LCD_BACK_SENSOR_INDEX,lcdBuffer);
 
 #endif
@@ -171,6 +172,8 @@ void period_1Hz(uint32_t count)
 //	LOG_INFO(" %d ",m_rpmCounter);
 
 //		printf(" %d ",m_rpmCounter);
+//		prev_rpmCounter=m_rpmCounter;
+//
 //	m_rpmCounter=0;
 
 
@@ -182,7 +185,9 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-	drive_car();
+
+	drive_car(count);
+	//drive_car();
 	//	drive_with_feedback();
 
 	if(SW.getSwitch(1))
@@ -205,6 +210,12 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
+	if(count%100 == 0)
+	{
+		prev_rpmCounter=m_rpmCounter;
+		m_rpmCounter=0;
+		printf(" %d ",prev_rpmCounter);
+	}
 
 }
 
