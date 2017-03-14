@@ -2,24 +2,21 @@
 *********************************************************
 ** Initial commits 
 *********************************************************
-This is a sample project
-bharat added this
-This change via branch. (Branch Name: branch_bharat)
-
-This changes are made by rimjhim (Branch Nae: rimjhimdev)
-This change via Branch. (Branch Name:kepler_branch_aajna)
-This change via Branch. (Branch Name:kepler_branch_spoorthi)
-
-Change via Branch shruthi_dev.
-
-Edit done by prashant.
-i
-This is an edit made by Shantanu Vashishtha
-i
-This is changed via branch by Chethan. (Branch Name: kepler_branch_chethan)
-This is secong changes-rimjhim_dev_branch
-
-This change via branch. (branch Name:prashant_dev)
+Team:
+Sensor Controller:
+  Shruthi Narayan
+  Rimjhim Ghosh
+Motor & I/O Controller:
+  Prashant Aithal
+  Chethan Keshava 
+Geographical Controller:
+  Ankit Gandhi
+Master Controller:
+  Aajna Karki
+  Spoorthi Mysore Shivakumar
+Communication Bridge Controller:
+  Bharat Khanna
+  Shantanu Vasishtha
 
 
 *****************************************
@@ -68,5 +65,5 @@ Readme section for Sensor controller
 *****************************************
 Readme section for Motor/IO controller
 *****************************************
-This module is developed by Chethan Keshav and Prashanth Aithal to control the motors and all IO devices in the car.
+This module is developed by Chethan Keshava and Prashanth Aithal to control the motors and all IO devices in the car.
 
