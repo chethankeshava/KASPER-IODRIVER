@@ -2,7 +2,7 @@
  * motor.cpp
  *
  *  Created on: Oct 31, 2016
- *      Author: Chethan
+ *      Author: prash
  */
 #include "motor.hpp"
 #include "../_can_dbc/generated_can.h"
