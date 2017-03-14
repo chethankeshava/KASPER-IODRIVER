@@ -68,5 +68,5 @@ Readme section for Sensor controller
 *****************************************
 Readme section for Motor/IO controller
 *****************************************
-
+This module is developed by Chethan Keshav and Prashanth Aithal to control the motors and all IO devices in the car.
 
